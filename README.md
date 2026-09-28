@@ -6,7 +6,15 @@ An era-spanning MLB draft and simulation game where every rating is a real, visi
 
 **Classic Mode — Era Draft.** Each pick spins a random franchise and decade (e.g. *1990s Atlanta Braves*); you draft one player's peak season with that team in that decade into an eligible roster slot. Fill a 9-man lineup, 5-man rotation, and 3-man bullpen, draft a real manager as your coach, then simulate a 162-game season. The goal: go 162-0.
 
-**Daily Mode — Beat the Legends.** A daily puzzle (same for everyone, seeded by UTC date). Today's theme is Power Hitters: draft three elite starters to face a lineup of all-time sluggers. Every plate appearance is a log5 matchup of era-adjusted career rates, and your score is expected runs allowed versus a calibrated par.
+**Daily Mode — Beat the Legends.** A daily puzzle (same for everyone, seeded by UTC date) that rotates through three themes:
+
+| Theme | You face | You draft | The counter-lever |
+|---|---|---|---|
+| **Power Hitters** | nine career sluggers (any era) | 3 elite starters | home-run suppression |
+| **Contact Hitters** | nine career low-strikeout, high-average bats (any era) | 3 elite starters | walk prevention |
+| **Great Pitchers** | one modern ace (2015–2024) | 9 modern hitters | handling his signature pitch |
+
+Every plate appearance is a log5 matchup, and your score is expected runs (allowed, or scored against the ace) versus a calibrated par.
 
 ## The math
 
@@ -14,7 +22,9 @@ An era-spanning MLB draft and simulation game where every rating is a real, visi
 - **Pitchers:** FIP, FIP−, park- and era-adjusted ERA+, and FIP-based runs saved.
 - **Era fairness:** every player is measured against their own year and league. Daily Mode converts careers to a modern (2015–2024) environment with the odds-ratio method, shrinking small samples toward average.
 - **Season sim:** lineup runs above average and staff runs saved feed the Pythagorean win formula (exponent 1.83).
-- **Matchup sim:** log5 on K / BB / HR / ball in play, then an exact base-out state machine turns outcomes into expected runs.
+- **Matchup sim:** log5 on K / BB / HR / ball in play; a ball in play falls for a hit at the batter's own era-adjusted, shrunk BABIP (pitchers don't control it). An exact base-out state machine turns outcomes into expected runs.
+- **Contact lever:** under log5, a pitcher's strikeout edge shrinks against hitters who rarely strike out, so command (walk rate) carries relatively more weight. It emerges from the math; no bonus is bolted on.
+- **Great Pitchers (Statcast):** every plate appearance is split by the pitch group it ends on (fastball / slider / curveball / changeup), with a log5 matchup per group weighted by the ace's pitch mix. A hitter's rates against each group are shrunk toward what his overall skill predicts, so his edge against a curveball is only what the data shows beyond how good he is in general. Each ace's signature pitch is chosen from the data (the group where he beats the league by the most wOBA), not from scouting reports.
 - Short seasons (2020, the 1870s, the Negro Leagues) are kept by scaling playing-time thresholds to team games played.
 
 ## Getting started
@@ -26,12 +36,18 @@ pip install -r requirements.txt
 ```
 
 1. Download the [Lahman Baseball Database](https://www.seanlahman.com/) CSVs into `data/lahman/` (`Batting.csv`, `Pitching.csv`, `Fielding.csv`, `Teams.csv`, `People.csv`, `Managers.csv`, `FieldingOF.csv`, `FieldingOFsplit.csv`, …).
-2. Build the stat engine and calibrate Daily Mode par:
+2. Build the stat engine and calibrate Daily Mode par (Power and Contact Hitters):
    ```bash
    python -m warball.pipeline
    python -m warball.daily
    ```
-3. Run the game and open http://127.0.0.1:8000 (Classic) or `/daily.html` (Daily):
+3. For Great Pitchers, pull 2015–2024 Statcast from Baseball Savant (resumable per season, roughly 10–30 minutes a season) and pick the aces:
+   ```bash
+   python -m warball.statcast
+   python -m warball.aces
+   ```
+   The rotation skips any theme that isn't built yet.
+4. Run the game and open http://127.0.0.1:8000 (Classic) or `/daily.html` (Daily). Add `?theme=power|contact|aces` (and `&date=YYYY-MM-DD`) to preview another day's puzzle:
    ```bash
    python -m warball.server
    ```
@@ -44,7 +60,8 @@ There's also a terminal version of the Classic draft: `python scripts/cli_draft.
 python -m pytest tests
 python scripts/phase1_check.py   # stat engine vs. known career numbers
 python scripts/phase2_check.py   # Classic draft + season sim
-python scripts/phase3_check.py   # Daily Mode: par, spread, theme lever
+python scripts/phase3_check.py   # Daily Mode Power + Contact: Legends, par, spread, theme lever
+python scripts/phase4_check.py   # Daily Mode Great Pitchers: Statcast coverage, Kershaw's curveball, par, lever
 ```
 
 ## Known simplifications
@@ -52,7 +69,9 @@ python scripts/phase3_check.py   # Daily Mode: par, spread, theme lever
 - The base-out engine uses simple advancement rules (no sac flies, double plays, or extra bases), undercounting runs slightly — equally for every staff.
 - Odds-ratio era adjustment amplifies sluggers from very low-HR eras (Babe Ruth adjusts to a 16.9% HR rate); power Legends also need a 4% raw HR rate.
 - Negro League hitters are excluded from Daily Mode lineups because their strikeouts weren't recorded.
+- Great Pitchers ignores handedness (a hitter's rates against a pitch group mix lefties and righties), uses four coarse pitch groups, and drops the rare plate appearances that end on a knuckleball, eephus, or other unclassified pitch.
+- Par is calibrated against random entries from the whole pool, so on a day when the drafted-from pool is unusually strong, more than 30% of entries beat par.
 
 ## Roadmap
 
-Contact Hitters and Great Pitchers (Statcast) themes, a daily leaderboard, era bonuses/penalties, player "badges," and teammate/duo bonuses. See `warball-roadmap.md` and `warball-mlb-concept.md`.
+A daily leaderboard (Phase 5), era bonuses/penalties, player "badges," and teammate/duo bonuses. See `warball-roadmap.md` and `warball-mlb-concept.md`.

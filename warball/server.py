@@ -8,8 +8,8 @@ season engine the CLI uses, so the browser never does any of the math itself:
   GET  /api/spin?open=C,OF,SP&exclude=pid1,pid2   spin until someone fits an open slot
   GET  /api/coach-spin                            spin until the team-decade has a qualified manager
   POST /api/simulate                              {lineup, rotation, bullpen, coach} card ids -> season
-  GET  /api/daily?date=YYYY-MM-DD                 the daily challenge (defaults to today, UTC)
-  POST /api/daily/simulate                        {date, staff: [pitcher ids]} -> score vs. par + breakdown
+  GET  /api/daily?date=YYYY-MM-DD&theme=KEY      the daily challenge (defaults: today in UTC, and that day's theme)
+  POST /api/daily/simulate                        {date, picks: [ids], theme?} -> score vs. par + breakdown
 
 Usage:
     python -m warball.server        # then open http://127.0.0.1:8000 (Classic) or /daily.html
@@ -178,14 +178,18 @@ class Handler(SimpleHTTPRequestHandler):
             "/api/wheel": lambda: self.api.wheel(),
             "/api/spin": lambda: self.api.spin(split("open"), split("exclude")),
             "/api/coach-spin": lambda: self.api.coach_spin(),
-            "/api/daily": lambda: self.api.daily.challenge(_daily_date(params.get("date", [None])[0])),
+            "/api/daily": lambda: self.api.daily.challenge(
+                _daily_date(params.get("date", [None])[0]), params.get("theme", [None])[0]
+            ),
         }
         self._respond(routes.get(url.path))
 
     def do_POST(self):
         routes = {
             "/api/simulate": lambda body: self.api.simulate(body),
-            "/api/daily/simulate": lambda body: self.api.daily.simulate(_daily_date(body["date"]), list(body["staff"])),
+            "/api/daily/simulate": lambda body: self.api.daily.simulate(
+                _daily_date(body["date"]), list(body.get("picks", body.get("staff", []))), body.get("theme")
+            ),
         }
         route = routes.get(urlparse(self.path).path)
         if route is None:

@@ -12,7 +12,8 @@ Era-adjusted, shrunk career rates for Daily Mode.
 3. Each career is shrunk toward the reference average by adding SHRINK of
    reference-average performance, so short careers can't dominate.
 
-Batters also carry an era-adjusted career mix of non-HR hit types.
+Batters also carry an era-adjusted career mix of non-HR hit types and an
+era-adjusted career BABIP (hits on balls in play), both shrunk the same way.
 """
 
 import pandas as pd
@@ -36,6 +37,9 @@ MIN_LEAGUE_BATTER_K_RATE = 0.05
 BATTER_SHRINK = {"K": 100, "BB": 150, "HR": 250, "BIP": 100}
 PITCHER_SHRINK = {"K": 150, "BB": 250, "HR": 600, "BIP": 250}
 HIT_MIX_SHRINK = 100
+# Hitter BABIP is a real but noisy skill: it takes roughly 800 balls in play
+# before a hitter's own BABIP says as much as the league average does.
+BABIP_SHRINK = 800
 
 # A pitcher is a starter when at least this share of his career games were starts.
 STARTER_GS_SHARE = 0.5
@@ -158,7 +162,18 @@ def career_batters(batting: pd.DataFrame, raw_batting: pd.DataFrame, lg: pd.Data
     shrunk = _shrink(careers, totals["PA"], env.rates, BATTER_SHRINK)
     mix_shrunk = _shrink(mix_careers, non_hr_hits, env.hit_mix, {t: HIT_MIX_SHRINK for t in HIT_TYPES})
 
+    # BABIP: (H - HR) / balls in play, where balls in play = PA - K - BB - HBP - HR
+    # (the same definition as the league's), era-adjusted, weighted by balls in play.
+    s["bip"] = s["PA"] - s["SO"] - s["BB"] - s["HBP"] - s["HR"]
+    in_play = s[s["bip"] > 0].copy()
+    raw_babip = ((in_play["H"] - in_play["HR"]) / in_play["bip"]).clip(0, 0.999)
+    in_play["adj_babip"] = from_odds(odds(raw_babip) * odds(env.babip) / odds(in_play["babip"]))
+    babip = _weighted_career(in_play, ["adj_babip"], "bip")["adj_babip"].reindex(totals.index).fillna(env.babip)
+    bip = in_play.groupby("playerID")["bip"].sum().reindex(totals.index, fill_value=0)
+
     out = totals.join(shrunk).join(mix_shrunk.add_prefix("mix_"))
+    out["BIP_total"] = bip
+    out["babip"] = (babip * bip + env.babip * BABIP_SHRINK) / (bip + BABIP_SHRINK)
     out["ISO"] = (out["b2B"] + 2 * out["b3B"] + 3 * out["HR_total"]) / out["AB"]
     return out.reset_index()
 

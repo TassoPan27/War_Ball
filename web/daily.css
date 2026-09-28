@@ -104,6 +104,7 @@
 .stat-block .stat-label { font-size: 0.68rem; color: var(--ink-soft); margin-top: 1px; }
 
 .legends-panel { margin-top: 24px; }
+.math-table tr.signature td { color: var(--clay-dark); font-weight: 600; }
 
 /* ---------- Sidebar ---------- */
 .sidebar { position: sticky; top: 20px; align-self: start; }
@@ -134,7 +135,7 @@
 
 /* ---------- Result ---------- */
 .score-big { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 4rem; line-height: 1.1; color: var(--gold); margin-top: 6px; }
-.sb-banner.over { background: var(--parchment-dim); color: var(--clay-dark); }
+.sb-banner.miss { background: var(--parchment-dim); color: var(--clay-dark); }
 
 .sample-panel { margin-bottom: 20px; }
 .sample-row { display: flex; align-items: center; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--line); }

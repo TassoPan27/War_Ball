@@ -23,12 +23,12 @@
   <div class="hero-card">
     <div>
       <div class="theme-tag" id="theme-tag">TODAY'S THEME</div>
-      <h1 class="hero-headline">Nine career sluggers. Three arms. Beat par.</h1>
+      <h1 class="hero-headline" id="hero-headline">Beat the Legends.</h1>
       <p class="hero-sub" id="hero-sub">Loading today's challenge…</p>
     </div>
     <div class="hero-stat">
       <div class="big" id="hero-par">—</div>
-      <div class="label">PAR<br>EXPECTED RUNS ALLOWED</div>
+      <div class="label" id="hero-par-label">PAR</div>
     </div>
   </div>
 </div>
@@ -36,26 +36,27 @@
 <!-- ================= Draft ================= -->
 <main class="daily-main" id="draft-view">
   <div>
-    <h2 class="section-title">DRAFT POOL — ELITE STARTERS</h2>
+    <h2 class="section-title" id="pool-title">DRAFT POOL</h2>
     <p class="pool-note" id="pool-note"></p>
     <div class="pool-grid" id="pool"></div>
 
     <div class="panel legends-panel">
-      <h2 class="section-title">TODAY'S LEGENDS</h2>
+      <h2 class="section-title" id="legends-title">TODAY'S LEGENDS</h2>
+      <p class="pool-note" id="legends-note" hidden></p>
       <table class="math-table" id="legends-table"></table>
     </div>
   </div>
 
   <div class="sidebar">
     <div class="panel">
-      <div class="staff-progress">YOUR STAFF <span class="filled" id="progress-count">0</span> / <span id="staff-size">3</span></div>
-      <div class="staff-list" id="staff-slots"></div>
+      <div class="staff-progress"><span id="pick-label">YOUR PICKS</span> <span class="filled" id="progress-count">0</span> / <span id="pick-count">—</span></div>
+      <div class="staff-list" id="pick-slots"></div>
       <div class="target">
         <div class="target-row"><span>Par</span><span class="num" id="target-par">—</span></div>
-        <div class="target-row"><span>League-average staff</span><span class="num" id="target-average">—</span></div>
-        <div class="target-note">Expected runs allowed. Lower is better.</div>
+        <div class="target-row"><span id="target-average-label">League average</span><span class="num" id="target-average">—</span></div>
+        <div class="target-note" id="target-note"></div>
       </div>
-      <button class="action-btn lock-btn" id="lock-btn" disabled>LOCK IN STAFF</button>
+      <button class="action-btn lock-btn" id="lock-btn" disabled>LOCK IN</button>
       <p class="pool-hint error" id="error" hidden></p>
     </div>
   </div>
@@ -64,7 +65,7 @@
 <!-- ================= Result ================= -->
 <main class="sim-main" id="result-view" hidden>
   <div class="scoreboard">
-    <div class="sb-label">BEAT THE LEGENDS · <span id="result-date"></span></div>
+    <div class="sb-label"><span id="result-theme"></span> · <span id="result-date"></span></div>
     <div class="score-big" id="score">—</div>
     <div class="sb-game" id="score-sub"></div>
     <div class="sb-banner" id="par-banner"></div>
@@ -83,12 +84,12 @@
       <div id="math-lines"></div>
     </div>
     <div class="panel">
-      <h2 class="section-title">YOUR STAFF</h2>
-      <table class="math-table" id="staff-table"></table>
+      <h2 class="section-title" id="picks-result-title">YOUR PICKS</h2>
+      <table class="math-table" id="picks-table"></table>
     </div>
     <div class="panel">
-      <h2 class="section-title">THE LEGENDS AT THE PLATE</h2>
-      <table class="math-table" id="legends-result-table"></table>
+      <h2 class="section-title" id="opponent-result-title">THE LEGENDS</h2>
+      <table class="math-table" id="opponent-table"></table>
     </div>
   </div>
 </main>

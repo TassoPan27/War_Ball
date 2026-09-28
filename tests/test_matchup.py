@@ -88,3 +88,14 @@ def test_better_staff_allows_fewer_runs():
     aces = expected_runs(lineup, [ACE] * 3, ENV)["total"]
     average = expected_runs(lineup, [average_pitcher(ENV)] * 3, ENV)["total"]
     assert aces < average
+
+
+def test_batter_babip_drives_hits_on_balls_in_play():
+    league_babip = outcome_probs(SLUGGER, ACE, ENV)  # SLUGGER has no BABIP of his own
+    liner = Batter(SLUGGER.rates, SLUGGER.hit_mix, 0.36)
+    high = outcome_probs(liner, ACE, ENV)
+    assert league_babip["1B"] + league_babip["2B"] + league_babip["3B"] == pytest.approx(
+        (league_babip["1B"] + league_babip["2B"] + league_babip["3B"] + league_babip["OUT"]) * ENV.babip
+    )
+    assert high["1B"] > league_babip["1B"] and high["OUT"] < league_babip["OUT"]
+    assert high["K"] == league_babip["K"] and math.isclose(sum(high.values()), 1.0)
