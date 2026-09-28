@@ -1,14 +1,16 @@
 """
-Phase 3 checklist - Daily Mode game loop (docs: daily-mode-loop-spec.md, section 9).
+Phase 3 checklist - Daily Mode Themes A & B (docs: daily-mode-loop-spec.md, section 9).
 
   - career rates: famous careers' totals match known numbers
+  - Legends: each theme's lineups are the players its stat says they should be
   - determinism: same lineup + staff always gives the same score
   - par: stored per lineup; a strong staff beats it, a random one usually doesn't
   - spread: the score distribution across random staffs is wide enough to matter
-  - power lever: a low-HR staff beats a higher-quality, HR-prone staff in some cases
+  - theme lever: a staff strong on the theme's lever (HR% for power, BB% for
+    contact) beats a higher-quality staff that's weak on it in some cases
   - breakdown: raw quality + matchup edge add back up to the score
   - the ranked score never depends on the sampled reveal
-The log5 property tests live in tests/test_matchup.py (python -m pytest tests).
+The model property tests live in tests/ (python -m pytest tests).
 
 Usage:
     python -m warball.daily          # (re)calibrate par after changing careers or settings
@@ -30,29 +32,45 @@ from warball import runs
 from warball.matchup import average_batter
 
 TODAY = datetime.date(2026, 9, 28)
-KNOWN_CAREERS = {  # playerID: (career HR, career SO) from Baseball-Reference
-    "aaronha01": ("HR_total", 755),
-    "bondsba01": ("HR_total", 762),
-    "ruthba01": ("HR_total", 714),
-}
-KNOWN_PITCHERS = {"johnswa01": 3509, "maddugr01": 3371, "martipe02": 3154}
+KNOWN_CAREERS = {"aaronha01": 755, "bondsba01": 762, "ruthba01": 714}  # career HR, Baseball-Reference
+KNOWN_PITCHERS = {"johnswa01": 3509, "maddugr01": 3371, "martipe02": 3154}  # career strikeouts
 
 
-def check_careers(challenge: d.DailyChallenge):
+def check_careers(challenge: d.StaffChallenge):
     print("=== Career rates ===")
-    for pid, (col, expected) in KNOWN_CAREERS.items():
-        assert challenge.batters.loc[pid, col] == expected, f"{pid} career {col} is off"
+    b = challenge.batters
+    for pid, expected in KNOWN_CAREERS.items():
+        assert b.loc[pid, "HR_total"] == expected, f"{pid} career HR is off"
     for pid, expected in KNOWN_PITCHERS.items():
         assert challenge.pitchers.loc[pid, "SO_total"] == expected, f"{pid} career strikeouts are off"
-    b = challenge.batters
+    assert "babip" in b, "Career BABIP missing: rerun python -m warball.pipeline"
     print("Career totals match: Aaron 755 HR, Bonds 762, Ruth 714; Johnson 3509 K, Maddux 3371, Pedro 3154.")
     for pid in ["ruthba01", "bondsba01", "aaronha01", "judgeaa01"]:
         r = b.loc[pid]
         print(f"  {r['name']}: raw HR/PA {r['HR_total'] / r['PA']:.3f} -> modern-adjusted {r['HR']:.3f}")
+    for pid in ["gwynnto01", "boggswa01", "suzukic01", "seweljo01"]:
+        r = b.loc[pid]
+        print(f"  {r['name']}: adjusted K {r['K']:.3f}, BABIP {r['babip']:.3f}, modeled AVG "
+              f"{d.modeled_avg(b.loc[[pid]], challenge.env).iloc[0]:.3f} (actual career AVG {r['H'] / r['AB']:.3f})")
 
 
-def check_scoring(challenge: d.DailyChallenge):
-    print("\n=== Determinism, par, breakdown ===")
+def check_legends(challenge: d.StaffChallenge):
+    theme = challenge.theme
+    print(f"\n=== {theme.label}: Legends ===")
+    b = challenge.batters
+    for lineup in challenge.lineups:
+        players = b.loc[lineup["players"]]
+        if theme.key == "contact":
+            assert (d.modeled_avg(players, challenge.env) >= d.CONTACT_MIN_ADJ_AVG).all()
+            assert players["K"].max() < challenge.env.rates["K"] * 0.6, "Contact Legends should strike out far less than league"
+        else:
+            assert players["HR"].min() > challenge.env.rates["HR"] * 1.5, "Power Legends should homer far more than league"
+        names = ", ".join(n.split()[-1] for n in players["name"])
+        print(f"Lineup {lineup['id']}: {names}")
+
+
+def check_scoring(challenge: d.StaffChallenge):
+    print(f"\n=== {challenge.theme.label}: determinism, par, breakdown ===")
     lineup, pool = challenge.day(TODAY)
     staffs = list(itertools.combinations(pool, d.STAFF_SIZE))
     first = challenge.simulate(TODAY, list(staffs[0]))
@@ -64,7 +82,7 @@ def check_scoring(challenge: d.DailyChallenge):
     legends = [d.to_batter(challenge.batters.loc[p]) for p in lineup["players"]]
     staff = [d.to_pitcher(challenge.pitchers.loc[p]) for p in staffs[0]]
     assert first["score"] == runs.expected_runs(legends, staff, challenge.env)["total"], "Score must be the pure expected value"
-    assert abs(first["averageStaff"] - first["rawQuality"] - first["matchupEdge"] - first["score"]) < 1e-9
+    assert abs(first["average"] - first["rawQuality"] - first["matchupEdge"] - first["score"]) < 1e-9
     print("Same staff -> same score (in any draft order); score is the RNG-free expected value; breakdown adds up.")
 
     scores = sorted(challenge.simulate(TODAY, list(s))["score"] for s in staffs)
@@ -74,30 +92,28 @@ def check_scoring(challenge: d.DailyChallenge):
           f"par {lineup['par']:.2f} -> {beat} beat par ({beat / len(scores):.0%}).")
 
 
-def check_spread(challenge: d.DailyChallenge):
-    print("\n=== Score distribution per lineup (random elite staffs, from calibration) ===")
+def check_spread(challenge: d.StaffChallenge):
+    print(f"\n=== {challenge.theme.label}: score distribution per lineup (random elite staffs) ===")
     for lineup in challenge.lineups:
         assert lineup["std"] > 0.1, "Spread too narrow for a leaderboard to mean much"
-        names = ", ".join(challenge.batters.loc[p, "name"].split()[-1] for p in lineup["players"])
-        print(f"Lineup {lineup['id']} ({names}): par {lineup['par']:.2f}, mean {lineup['mean']:.2f}, "
+        print(f"Lineup {lineup['id']}: par {lineup['par']:.2f}, mean {lineup['mean']:.2f}, "
               f"sd {lineup['std']:.2f}, best {lineup['best']:.2f}, worst {lineup['worst']:.2f}")
 
 
-def check_power_lever(challenge: d.DailyChallenge):
-    print("\n=== Theme lever: home-run suppression ===")
+def check_lever(challenge: d.StaffChallenge):
+    theme = challenge.theme
+    print(f"\n=== {theme.label}: theme lever ({theme.lever_name}) ===")
     env = challenge.env
-    lineup = challenge.lineups[0]
-    legends = [d.to_batter(challenge.batters.loc[p]) for p in lineup["players"]]
+    legends = [d.to_batter(challenge.batters.loc[p]) for p in challenge.lineups[0]["players"]]
     average_lineup = [average_batter(env)] * d.LINEUP_SIZE
     rng = random.Random("lever-check")
-    staffs = [rng.sample(challenge.elite_pool, d.STAFF_SIZE) for _ in range(300)]
     rows = []
-    for ids in staffs:
-        staff = [d.to_pitcher(challenge.pitchers.loc[p]) for p in ids]
+    for _ in range(300):
+        staff = [d.to_pitcher(challenge.pitchers.loc[p]) for p in rng.sample(challenge.elite_pool, d.STAFF_SIZE)]
         rows.append((
             runs.expected_runs(average_lineup, staff, env)["total"],  # raw quality (lower = better)
             runs.expected_runs(legends, staff, env)["total"],  # today's score
-            np.mean([p.rates["HR"] for p in staff]),
+            np.mean([p.rates[theme.lever] for p in staff]),
         ))
     flips = sum(
         1 for a, b in itertools.combinations(rows, 2)
@@ -105,15 +121,19 @@ def check_power_lever(challenge: d.DailyChallenge):
         if better[0] < worse[0] and better[1] > worse[1] and worse[2] < better[2]
     )
     pairs = len(rows) * (len(rows) - 1) // 2
-    assert flips > 0, "A low-HR staff never beats a better-overall, HR-prone staff: the power lever isn't working"
+    assert flips > 0, f"A strong-{theme.lever} staff never beats a better-overall staff: the lever isn't working"
     print(f"{flips} of {pairs} staff pairs ({flips / pairs:.1%}): the staff with better raw quality loses to the Legends "
-          f"because the other staff allows fewer home runs.")
+          f"because the other staff is better at {theme.lever_name}.")
 
 
 if __name__ == "__main__":
-    challenge = d.DailyChallenge()
-    check_careers(challenge)
-    check_scoring(challenge)
-    check_spread(challenge)
-    check_power_lever(challenge)
-    print("\nPhase 3 (Daily Mode loop) check passed.")
+    batters, pitchers = d.load_careers()
+    for i, theme in enumerate(d.STAFF_THEMES.values()):
+        challenge = d.StaffChallenge(theme, batters, pitchers)
+        if i == 0:
+            check_careers(challenge)
+        check_legends(challenge)
+        check_scoring(challenge)
+        check_spread(challenge)
+        check_lever(challenge)
+    print("\nPhase 3 (Daily Mode Themes A & B) check passed.")

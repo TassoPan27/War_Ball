@@ -76,12 +76,16 @@ def _expected_runs_sequence(pa_probs: list[np.ndarray]) -> np.ndarray:
     return per_pa
 
 
-def matchup_table(lineup: list[Batter], staff: list[Pitcher], env: Environment) -> np.ndarray:
-    """Outcome probabilities for every (pitcher, batter) pair: shape (len(staff), len(lineup), len(OUTCOMES))."""
-    return np.array([[[outcome_probs(b, p, env)[o] for o in OUTCOMES] for b in lineup] for p in staff])
+def matchup_table(lineup: list[Batter], staff: list[Pitcher], env: Environment, probs=outcome_probs) -> np.ndarray:
+    """Outcome probabilities for every (pitcher, batter) pair: shape (len(staff), len(lineup), len(OUTCOMES)).
+
+    probs(batter, pitcher, env) -> {outcome: probability} is the plate-appearance
+    model: matchup.outcome_probs by default, arsenal.outcome_probs for Theme C.
+    """
+    return np.array([[[probs(b, p, env)[o] for o in OUTCOMES] for b in lineup] for p in staff])
 
 
-def expected_runs(lineup: list[Batter], staff: list[Pitcher], env: Environment) -> dict:
+def expected_runs(lineup: list[Batter], staff: list[Pitcher], env: Environment, probs=outcome_probs) -> dict:
     """Expected runs when each pitcher faces the lineup once through, in turn.
 
     The base-out state carries across pitching changes, so the order the arms
@@ -90,13 +94,18 @@ def expected_runs(lineup: list[Batter], staff: list[Pitcher], env: Environment) 
 
     Returns the total plus each pitcher's and each batter's share of it.
     """
-    table = matchup_table(lineup, staff, env)
-    per_pitcher = np.zeros(len(staff))
-    per_batter = np.zeros(len(lineup))
-    orders = list(itertools.permutations(range(len(staff))))
+    return expected_runs_from_table(matchup_table(lineup, staff, env, probs))
+
+
+def expected_runs_from_table(table: np.ndarray) -> dict:
+    """expected_runs() for a precomputed matchup_table (staff x lineup x OUTCOMES)."""
+    n_staff, n_lineup = table.shape[:2]
+    per_pitcher = np.zeros(n_staff)
+    per_batter = np.zeros(n_lineup)
+    orders = list(itertools.permutations(range(n_staff)))
     for order in orders:
-        sequence = [table[p, b] for p in order for b in range(len(lineup))]
-        runs = _expected_runs_sequence(sequence).reshape(len(staff), len(lineup))
+        sequence = [table[p, b] for p in order for b in range(n_lineup)]
+        runs = _expected_runs_sequence(sequence).reshape(n_staff, n_lineup)
         per_pitcher[list(order)] += runs.sum(axis=1)
         per_batter += runs.sum(axis=0)
     per_pitcher /= len(orders)
@@ -104,13 +113,16 @@ def expected_runs(lineup: list[Batter], staff: list[Pitcher], env: Environment) 
     return {"total": float(per_pitcher.sum()), "per_pitcher": per_pitcher, "per_batter": per_batter}
 
 
-def sample_game(lineup: list[Batter], staff: list[Pitcher], env: Environment, seed: str) -> list[dict]:
+def sample_game(lineup: list[Batter], staff: list[Pitcher], env: Environment, seed: str, probs=outcome_probs) -> list[dict]:
     """One seeded play-through of the same sequence (cosmetic; never ranked)."""
+    return sample_game_from_table(matchup_table(lineup, staff, env, probs), seed)
+
+
+def sample_game_from_table(table: np.ndarray, seed: str) -> list[dict]:
     rng = random.Random(seed)
-    table = matchup_table(lineup, staff, env)
     outs, bases, inning, events = 0, 0, 1, []
-    for p in range(len(staff)):
-        for b in range(len(lineup)):
+    for p in range(table.shape[0]):
+        for b in range(table.shape[1]):
             outcome = rng.choices(OUTCOMES, weights=table[p, b])[0]
             outs, bases, scored = _advance(outs, bases, outcome)
             events.append({"pitcher": p, "batter": b, "inning": inning, "outcome": outcome, "runs": scored})
