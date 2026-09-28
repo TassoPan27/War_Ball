@@ -1,0 +1,162 @@
+/* Daily Mode page. Shared tokens, header, panels, buttons, and math tables live in styles.css. */
+
+.header-date { font-family: 'JetBrains Mono', monospace; color: var(--parchment-dim); }
+
+/* ---------- Hero ---------- */
+.hero {
+  background: linear-gradient(180deg, var(--field-green) 0%, var(--field-green) 55%, var(--parchment) 55%);
+  padding: 36px 28px 0;
+}
+.hero-card {
+  max-width: 1100px;
+  margin: 0 auto;
+  background: var(--card-bg);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 28px 32px;
+  display: flex;
+  gap: 32px;
+  align-items: center;
+  box-shadow: 0 12px 0 rgba(20, 46, 32, 0.15);
+}
+@media (max-width: 700px) {
+  .hero-card { flex-direction: column; align-items: flex-start; }
+}
+.theme-tag {
+  display: inline-block;
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--clay);
+  border: 1px solid var(--clay);
+  padding: 3px 9px;
+  border-radius: 2px;
+  margin-bottom: 10px;
+}
+.hero-headline { font-size: 2rem; font-weight: 700; margin: 0 0 8px; }
+.hero-sub { color: var(--ink-soft); font-size: 1rem; max-width: 60ch; margin: 0; }
+.hero-stat { flex-shrink: 0; text-align: center; padding-left: 28px; border-left: 1px solid var(--line); }
+.hero-stat .big { font-family: 'JetBrains Mono', monospace; font-size: 2.4rem; font-weight: 700; color: var(--clay); line-height: 1; }
+.hero-stat .label { font-size: 0.72rem; color: var(--ink-soft); margin-top: 6px; }
+
+/* ---------- Draft layout ---------- */
+.daily-main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 28px 80px;
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 28px;
+}
+@media (max-width: 800px) {
+  .daily-main { grid-template-columns: 1fr; }
+}
+
+.pool-note { font-size: 0.85rem; color: var(--ink-soft); margin: -6px 0 12px; }
+.edge-key { color: var(--clay); font-weight: 600; }
+.pool-group-label {
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: var(--ink-soft);
+  margin: 16px 0 8px;
+}
+
+.pool-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+@media (max-width: 560px) {
+  .pool-grid { grid-template-columns: 1fr; }
+}
+
+.player-card {
+  background: var(--card-bg);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+  position: relative;
+}
+.player-card:hover { border-color: var(--clay); }
+.player-card.selected { border-color: var(--clay); background: #FDF4EE; }
+.player-card.selected::after { content: "✓"; position: absolute; top: 12px; right: 14px; color: var(--clay); font-weight: 700; }
+.player-card.unavailable { opacity: 0.4; cursor: not-allowed; }
+.player-card.unavailable:hover { border-color: var(--line); }
+
+.player-head { display: flex; align-items: center; gap: 8px; }
+.role-badge {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 600;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: var(--field-green);
+  background: var(--parchment-dim);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  padding: 0 6px;
+}
+.player-name { font-weight: 600; font-size: 0.98rem; }
+.player-era { color: var(--ink-soft); font-size: 0.78rem; margin-top: 2px; }
+
+.player-stats { display: flex; gap: 14px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.stat-block .stat-value { font-family: 'JetBrains Mono', monospace; font-size: 0.92rem; font-weight: 700; }
+.stat-block .stat-value.edge { color: var(--clay); }
+.stat-block .stat-label { font-size: 0.68rem; color: var(--ink-soft); margin-top: 1px; }
+
+.legends-panel { margin-top: 24px; }
+
+/* ---------- Sidebar ---------- */
+.sidebar { position: sticky; top: 20px; align-self: start; }
+.staff-progress { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--ink-soft); margin-bottom: 12px; }
+.staff-progress .filled { color: var(--field-green); font-weight: 700; }
+
+.staff-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
+.staff-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 2px;
+  background: var(--parchment-dim);
+  font-size: 0.85rem;
+  min-height: 38px;
+}
+.staff-row.empty { color: var(--ink-soft); font-style: italic; }
+.staff-row.filled { cursor: pointer; }
+.staff-row .slot-role { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--field-green); font-style: normal; width: 92px; flex-shrink: 0; white-space: nowrap; }
+
+.target { border-top: 1px solid var(--line); padding-top: 12px; margin-bottom: 16px; }
+.target-row { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 3px 0; }
+.target-row .num { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--clay); }
+.target-note { font-size: 0.72rem; color: var(--ink-soft); margin-top: 4px; }
+
+.lock-btn { width: 100%; }
+
+/* ---------- Result ---------- */
+.score-big { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 4rem; line-height: 1.1; color: var(--gold); margin-top: 6px; }
+.sb-banner.over { background: var(--parchment-dim); color: var(--clay-dark); }
+
+.sample-panel { margin-bottom: 20px; }
+.sample-row { display: flex; align-items: center; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.sample-row:last-child { border-bottom: none; }
+.sample-arm { width: 150px; flex-shrink: 0; font-size: 0.85rem; font-weight: 600; }
+.sample-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.sample-total { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--ink-soft); margin-top: 10px; }
+
+.chip {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  min-width: 34px;
+  text-align: center;
+  padding: 3px 6px;
+  border-radius: 2px;
+  background: var(--parchment-dim);
+  color: var(--ink-soft);
+}
+.chip sup { font-size: 0.6rem; margin-left: 1px; }
+.chip-K { background: var(--field-green); color: var(--parchment); }
+.chip-BB, .chip-1B, .chip-2B, .chip-3B { background: #F4DCC9; color: var(--clay-dark); }
+.chip-HR { background: var(--clay); color: var(--parchment); }
+
+.math-line.sub { font-size: 0.8rem; color: var(--ink-soft); }

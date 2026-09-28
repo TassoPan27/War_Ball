@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WARBall — Beat the Legends</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --field-green: #1E4230;
+    --field-green-dark: #142E20;
+    --parchment: #EFE8D8;
+    --parchment-dim: #E4DBC6;
+    --ink: #1B2430;
+    --ink-soft: #4A5568;
+    --clay: #9C4B2E;
+    --clay-dark: #7E3B22;
+    --gold: #C9A227;
+    --line: rgba(27, 36, 48, 0.14);
+    --card-bg: #FBF8F1;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--parchment);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.5;
+  }
+
+  .display {
+    font-family: 'Oswald', sans-serif;
+    letter-spacing: 0.01em;
+  }
+
+  .mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ---------- Header ---------- */
+  header {
+    background: var(--field-green);
+    color: var(--parchment);
+    padding: 18px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 4px solid var(--field-green-dark);
+  }
+
+  .wordmark {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-size: 1.3rem;
+    letter-spacing: 0.04em;
+  }
+
+  .wordmark span { color: var(--gold); }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    font-size: 0.9rem;
+  }
+
+  .streak {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--gold);
+    font-weight: 600;
+  }
+
+  .streak .count { font-family: 'JetBrains Mono', monospace; }
+
+  /* ---------- Hero / theme banner ---------- */
+  .hero {
+    background: linear-gradient(180deg, var(--field-green) 0%, var(--field-green) 55%, var(--parchment) 55%);
+    padding: 36px 28px 0;
+  }
+
+  .hero-card {
+    max-width: 1100px;
+    margin: 0 auto;
+    background: var(--card-bg);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 28px 32px;
+    display: flex;
+    gap: 32px;
+    align-items: center;
+    box-shadow: 0 12px 0 rgba(20, 46, 32, 0.15);
+  }
+
+  .theme-tag {
+    display: inline-block;
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    color: var(--clay);
+    border: 1px solid var(--clay);
+    padding: 3px 9px;
+    border-radius: 2px;
+    margin-bottom: 10px;
+  }
+
+  .hero-headline {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 8px;
+  }
+
+  .hero-sub {
+    color: var(--ink-soft);
+    font-size: 1rem;
+    max-width: 56ch;
+    margin: 0;
+  }
+
+  .kershaw-stat {
+    flex-shrink: 0;
+    text-align: center;
+    padding-left: 28px;
+    border-left: 1px solid var(--line);
+  }
+
+  .kershaw-stat .big {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2.4rem;
+    font-weight: 700;
+    color: var(--clay);
+    line-height: 1;
+  }
+
+  .kershaw-stat .label {
+    font-size: 0.72rem;
+    color: var(--ink-soft);
+    margin-top: 6px;
+  }
+
+  /* ---------- Main layout ---------- */
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 28px 80px;
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 28px;
+  }
+
+  @media (max-width: 800px) {
+    main { grid-template-columns: 1fr; }
+  }
+
+  .section-title {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+    margin: 0 0 14px;
+    color: var(--field-green);
+  }
+
+  /* ---------- Draft pool ---------- */
+  .pool-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  @media (max-width: 560px) {
+    .pool-grid { grid-template-columns: 1fr; }
+  }
+
+  .player-card {
+    background: var(--card-bg);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, transform 0.1s ease;
+    position: relative;
+  }
+
+  .player-card:hover {
+    border-color: var(--clay);
+  }
+
+  .player-card.selected {
+    border-color: var(--clay);
+    background: #FDF4EE;
+  }
+
+  .player-card.selected::after {
+    content: "✓";
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    color: var(--clay);
+    font-weight: 700;
+  }
+
+  .player-name {
+    font-weight: 600;
+    font-size: 0.98rem;
+  }
+
+  .player-era {
+    color: var(--ink-soft);
+    font-size: 0.78rem;
+    margin-top: 2px;
+  }
+
+  .player-stats {
+    display: flex;
+    gap: 16px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+  }
+
+  .stat-block .stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+
+  .stat-block .stat-value.edge { color: var(--clay); }
+
+  .stat-block .stat-label {
+    font-size: 0.68rem;
+    color: var(--ink-soft);
+    margin-top: 1px;
+  }
+
+  /* ---------- Lineup sidebar ---------- */
+  .sidebar {
+    position: sticky;
+    top: 20px;
+    align-self: start;
+  }
+
+  .lineup-card {
+    background: var(--card-bg);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 20px;
+  }
+
+  .lineup-progress {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    margin-bottom: 12px;
+  }
+
+  .lineup-progress .filled { color: var(--field-green); font-weight: 700; }
+
+  .lineup-slots {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 18px;
+  }
+
+  .slot {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    border-radius: 2px;
+    background: var(--parchment-dim);
+    font-size: 0.85rem;
+    min-height: 34px;
+  }
+
+  .slot.empty { color: var(--ink-soft); font-style: italic; }
+
+  .slot .order {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    color: var(--field-green);
+    width: 16px;
+  }
+
+  .edge-total {
+    border-top: 1px solid var(--line);
+    padding-top: 14px;
+    margin-bottom: 16px;
+  }
+
+  .edge-total .label {
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+    margin-bottom: 4px;
+  }
+
+  .edge-total .value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--clay);
+  }
+
+  .lock-btn {
+    width: 100%;
+    padding: 13px;
+    background: var(--ink);
+    color: var(--parchment);
+    border: none;
+    border-radius: 2px;
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    letter-spacing: 0.03em;
+    cursor: not-allowed;
+    opacity: 0.45;
+    transition: opacity 0.15s ease, background 0.15s ease;
+  }
+
+  .lock-btn.ready {
+    cursor: pointer;
+    opacity: 1;
+    background: var(--clay);
+  }
+
+  .lock-btn.ready:hover { background: var(--clay-dark); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wordmark">WAR<span>Ball</span></div>
+  <div class="header-right">
+    <div class="streak">🔥 <span class="count">4</span> day streak</div>
+    <div>Sep 24</div>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="hero-card">
+    <div>
+      <div class="theme-tag">TODAY'S THEME — GREAT PITCHERS</div>
+      <h1 class="hero-headline">Clayton Kershaw takes the mound.</h1>
+      <p class="hero-sub">His curveball is the best pitch you'll face all week — an out pitch that's broken more than a few bats. Draft nine hitters who've historically seen it well. Raw power won't save you today.</p>
+    </div>
+    <div class="kershaw-stat">
+      <div class="big">.186</div>
+      <div class="label">OPP. AVG<br>VS. CURVEBALL</div>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div>
+    <h2 class="section-title">DRAFT POOL — CURVEBALL PERFORMANCE</h2>
+    <div class="pool-grid" id="pool"></div>
+  </div>
+
+  <div class="sidebar">
+    <div class="lineup-card">
+      <div class="lineup-progress">LINEUP <span class="filled" id="progress-count">0</span> / 9</div>
+      <div class="lineup-slots" id="slots"></div>
+      <div class="edge-total">
+        <div class="label">PROJECTED CURVEBALL EDGE</div>
+        <div class="value" id="edge-value">+.000</div>
+      </div>
+      <button class="lock-btn" id="lock-btn">LOCK IN LINEUP</button>
+    </div>
+  </div>
+</main>
+
+<script>
+  const players = [
+    { name: "Tony Gwynn", era: "1994 · SD", stat: ".410", label: "wOBA vs. CB", edge: true },
+    { name: "Rod Carew", era: "1977 · MIN", stat: ".395", label: "wOBA vs. CB", edge: true },
+    { name: "Wade Boggs", era: "1988 · BOS", stat: ".382", label: "wOBA vs. CB", edge: true },
+    { name: "Ichiro Suzuki", era: "2004 · SEA", stat: ".371", label: "wOBA vs. CB", edge: true },
+    { name: "Luis Arraez", era: "2023 · MIA", stat: ".366", label: "wOBA vs. CB", edge: true },
+    { name: "Joe Mauer", era: "2009 · MIN", stat: ".358", label: "wOBA vs. CB", edge: true },
+    { name: "Miguel Cabrera", era: "2013 · DET", stat: ".344", label: "wOBA vs. CB", edge: false },
+    { name: "Freddie Freeman", era: "2020 · ATL", stat: ".339", label: "wOBA vs. CB", edge: false },
+    { name: "Derek Jeter", era: "1999 · NYY", stat: ".330", label: "wOBA vs. CB", edge: false },
+    { name: "David Ortiz", era: "2006 · BOS", stat: ".298", label: "wOBA vs. CB", edge: false },
+    { name: "Mike Trout", era: "2019 · LAA", stat: ".312", label: "wOBA vs. CB", edge: false },
+    { name: "Tony Oliva", era: "1971 · MIN", stat: ".347", label: "wOBA vs. CB", edge: true },
+  ];
+
+  const pool = document.getElementById("pool");
+  const slotsEl = document.getElementById("slots");
+  const progressEl = document.getElementById("progress-count");
+  const edgeEl = document.getElementById("edge-value");
+  const lockBtn = document.getElementById("lock-btn");
+  const selected = [];
+
+  function render() {
+    pool.innerHTML = "";
+    players.forEach((p, i) => {
+      const isSelected = selected.includes(i);
+      const card = document.createElement("div");
+      card.className = "player-card" + (isSelected ? " selected" : "");
+      card.innerHTML = `
+        <div class="player-name">${p.name}</div>
+        <div class="player-era">${p.era}</div>
+        <div class="player-stats">
+          <div class="stat-block">
+            <div class="stat-value${p.edge ? " edge" : ""}">${p.stat}</div>
+            <div class="stat-label">${p.label}</div>
+          </div>
+        </div>
+      `;
+      card.addEventListener("click", () => toggle(i));
+      pool.appendChild(card);
+    });
+
+    slotsEl.innerHTML = "";
+    for (let i = 0; i < 9; i++) {
+      const idx = selected[i];
+      const slot = document.createElement("div");
+      slot.className = "slot" + (idx === undefined ? " empty" : "");
+      slot.innerHTML = `<span class="order">${i + 1}</span>${idx === undefined ? "empty" : players[idx].name}`;
+      slotsEl.appendChild(slot);
+    }
+
+    progressEl.textContent = selected.length;
+    const avgEdge = selected.length
+      ? (selected.reduce((sum, i) => sum + parseFloat(players[i].stat), 0) / selected.length - 0.320)
+      : 0;
+    edgeEl.textContent = (avgEdge >= 0 ? "+" : "") + avgEdge.toFixed(3);
+
+    if (selected.length === 9) {
+      lockBtn.classList.add("ready");
+    } else {
+      lockBtn.classList.remove("ready");
+    }
+  }
+
+  function toggle(i) {
+    const pos = selected.indexOf(i);
+    if (pos > -1) {
+      selected.splice(pos, 1);
+    } else if (selected.length < 9) {
+      selected.push(i);
+    }
+    render();
+  }
+
+  lockBtn.addEventListener("click", () => {
+    if (selected.length === 9) {
+      alert("Lineup locked in! (this is a mockup — wire this up to the real matchup simulation)");
+    }
+  });
+
+  render();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WARBall — Classic Draft</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+  <div class="wordmark">WAR<span>Ball</span></div>
+  <div class="header-right">
+    <nav class="mode-nav"><a href="/" class="active">Classic</a><a href="/daily.html">Daily</a></nav>
+    <div class="mode-tag">CLASSIC MODE — ERA DRAFT</div>
+  </div>
+</header>
+
+<!-- ================= Draft screen ================= -->
+<section id="draft-view">
+  <div class="randomizer">
+    <div class="reel-row">
+      <div class="reel" id="reel-team">
+        <div class="reel-label">TEAM</div>
+        <div class="reel-value" id="reel-team-value">— — —</div>
+      </div>
+      <div class="reel" id="reel-era">
+        <div class="reel-label">ERA</div>
+        <div class="reel-value" id="reel-era-value">— — —</div>
+      </div>
+      <button class="action-btn spin-btn" id="spin-btn">SPIN</button>
+    </div>
+  </div>
+
+  <main class="draft-main">
+    <div>
+      <h2 class="section-title" id="pool-title">DRAFT POOL</h2>
+      <div class="panel pool-panel" id="pool-panel"></div>
+    </div>
+
+    <div>
+      <div class="field-order-row">
+        <div class="panel">
+          <h2 class="section-title">DIAMOND</h2>
+          <div class="diamond-wrap">
+            <svg viewBox="0 0 480 470" width="100%" style="max-width: 420px;" aria-label="Baseball diamond">
+              <g class="field">
+                <!-- Outfield fan and infield dirt arc share a center, so the grass band is even all the way around -->
+                <path class="grass" stroke-width="16" d="M 240 395 L 9.4 227.4 A 236 236 0 0 1 470.6 227.4 Z"/>
+                <path class="dirt" stroke-width="12" d="M 240 395 L 54.2 233.6 A 191 191 0 0 1 425.8 233.6 Z"/>
+
+                <polygon class="grass" stroke-width="10" points="240,175.6 342.7,278.3 240,381 137.3,278.3"/>
+                <circle class="dirt" cx="356.7" cy="278.3" r="26"/>
+                <circle class="dirt" cx="240" cy="161.7" r="26"/>
+                <circle class="dirt" cx="123.3" cy="278.3" r="26"/>
+                <circle class="dirt" cx="240" cy="395" r="44"/>
+
+                <circle class="dirt" cx="240" cy="278.3" r="24" stroke="none"/>
+                <rect class="chalk-fill" x="229" y="275.3" width="22" height="6" rx="3"/>
+
+                <line class="chalk-line" stroke-width="7" x1="216" y1="388" x2="35" y2="207"/>
+                <line class="chalk-line" stroke-width="7" x1="264" y1="388" x2="445" y2="207"/>
+
+                <rect class="chalk-fill" x="-7" y="-7" width="14" height="14" rx="2.5" transform="translate(356.7 278.3) rotate(45)"/>
+                <rect class="chalk-fill" x="-7" y="-7" width="14" height="14" rx="2.5" transform="translate(240 161.7) rotate(45)"/>
+                <rect class="chalk-fill" x="-7" y="-7" width="14" height="14" rx="2.5" transform="translate(123.3 278.3) rotate(45)"/>
+
+                <path class="chalk-line" stroke-width="5" d="M 227 384 H 219 V 406 H 227"/>
+                <path class="chalk-line" stroke-width="5" d="M 253 384 H 261 V 406 H 253"/>
+                <circle class="chalk-fill" cx="240" cy="395" r="4.5"/>
+              </g>
+
+              <g class="pos-slot" data-slot="C">
+                <circle cx="240" cy="441" r="22"/>
+                <text class="pos-label" x="240" y="437">C</text>
+                <text class="pos-name" x="240" y="449"></text>
+              </g>
+              <g class="pos-slot" data-slot="1B">
+                <circle cx="352" cy="234" r="22"/>
+                <text class="pos-label" x="352" y="230">1B</text>
+                <text class="pos-name" x="352" y="242"></text>
+              </g>
+              <g class="pos-slot" data-slot="2B">
+                <circle cx="298" cy="196" r="22"/>
+                <text class="pos-label" x="298" y="192">2B</text>
+                <text class="pos-name" x="298" y="204"></text>
+              </g>
+              <g class="pos-slot" data-slot="SS">
+                <circle cx="182" cy="196" r="22"/>
+                <text class="pos-label" x="182" y="192">SS</text>
+                <text class="pos-name" x="182" y="204"></text>
+              </g>
+              <g class="pos-slot" data-slot="3B">
+                <circle cx="128" cy="234" r="22"/>
+                <text class="pos-label" x="128" y="230">3B</text>
+                <text class="pos-name" x="128" y="242"></text>
+              </g>
+              <g class="pos-slot" data-slot="LF">
+                <circle cx="103" cy="114" r="22"/>
+                <text class="pos-label" x="103" y="110">LF</text>
+                <text class="pos-name" x="103" y="122"></text>
+              </g>
+              <g class="pos-slot" data-slot="CF">
+                <circle cx="240" cy="64" r="22"/>
+                <text class="pos-label" x="240" y="60">CF</text>
+                <text class="pos-name" x="240" y="72"></text>
+              </g>
+              <g class="pos-slot" data-slot="RF">
+                <circle cx="377" cy="114" r="22"/>
+                <text class="pos-label" x="377" y="110">RF</text>
+                <text class="pos-name" x="377" y="122"></text>
+              </g>
+            </svg>
+          </div>
+          <div class="wide-slot dh-slot" id="dh-slot">
+            <span class="slot-label">DH</span>
+            <span class="slot-name">empty</span>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2 class="section-title">BATTING ORDER</h2>
+          <div id="order-slots"></div>
+          <div class="order-hint">
+            Click a drafted hitter below to add them to the order. Spots you leave empty are filled in field order when you move on to your coach.
+          </div>
+          <div class="order-tray" id="order-tray"></div>
+        </div>
+      </div>
+
+      <div class="panel staff-panel">
+        <h2 class="section-title">PITCHING STAFF</h2>
+        <div class="staff-group-label">ROTATION</div>
+        <div class="staff-slots" id="rotation-slots"></div>
+        <div class="staff-group-label">BULLPEN</div>
+        <div class="staff-slots" id="bullpen-slots"></div>
+      </div>
+
+      <div class="panel coach-panel">
+        <h2 class="section-title">COACH</h2>
+        <div class="wide-slot" id="coach-slot">
+          <span class="slot-label">MANAGER</span>
+          <span class="slot-name">drafted after your roster is full</span>
+        </div>
+      </div>
+    </div>
+  </main>
+</section>
+
+<!-- ================= Simulation screen ================= -->
+<section id="sim-view" hidden>
+  <main class="sim-main">
+    <div class="scoreboard">
+      <div class="sb-label" id="sb-label">SEASON SIMULATION</div>
+      <div class="sb-record"><span id="sb-wins">0</span>-<span id="sb-losses">0</span></div>
+      <div class="sb-game" id="sb-game">Game 0 of 162</div>
+      <div class="sb-bar"><div class="sb-bar-fill" id="sb-bar-fill"></div></div>
+      <div class="sb-banner" id="sb-banner" hidden>PERFECT SEASON</div>
+    </div>
+
+    <div class="math-grid" id="sim-math" hidden>
+      <div class="panel">
+        <h2 class="section-title">OFFENSE</h2>
+        <table class="math-table" id="offense-table"></table>
+        <div id="offense-lines"></div>
+      </div>
+      <div class="panel">
+        <h2 class="section-title">PITCHING</h2>
+        <table class="math-table" id="pitching-table"></table>
+        <div id="pitching-lines"></div>
+      </div>
+      <div class="panel wide">
+        <h2 class="section-title">THE RECORD</h2>
+        <div id="record-lines"></div>
+      </div>
+    </div>
+
+    <div class="sim-actions">
+      <button class="action-btn" id="again-btn" hidden>DRAFT AGAIN</button>
+    </div>
+  </main>
+</section>
+
+<script src="app.js"></script>
+</body>
+</html>

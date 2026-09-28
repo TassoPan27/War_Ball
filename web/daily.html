@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WARBall — Beat the Legends</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="daily.css">
+</head>
+<body>
+
+<header>
+  <div class="wordmark">WAR<span>Ball</span></div>
+  <div class="header-right">
+    <nav class="mode-nav"><a href="/">Classic</a><a href="/daily.html" class="active">Daily</a></nav>
+    <div class="header-date" id="header-date"></div>
+  </div>
+</header>
+
+<div class="hero" id="hero">
+  <div class="hero-card">
+    <div>
+      <div class="theme-tag" id="theme-tag">TODAY'S THEME</div>
+      <h1 class="hero-headline">Nine career sluggers. Three arms. Beat par.</h1>
+      <p class="hero-sub" id="hero-sub">Loading today's challenge…</p>
+    </div>
+    <div class="hero-stat">
+      <div class="big" id="hero-par">—</div>
+      <div class="label">PAR<br>EXPECTED RUNS ALLOWED</div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= Draft ================= -->
+<main class="daily-main" id="draft-view">
+  <div>
+    <h2 class="section-title">DRAFT POOL — ELITE STARTERS</h2>
+    <p class="pool-note" id="pool-note"></p>
+    <div class="pool-grid" id="pool"></div>
+
+    <div class="panel legends-panel">
+      <h2 class="section-title">TODAY'S LEGENDS</h2>
+      <table class="math-table" id="legends-table"></table>
+    </div>
+  </div>
+
+  <div class="sidebar">
+    <div class="panel">
+      <div class="staff-progress">YOUR STAFF <span class="filled" id="progress-count">0</span> / <span id="staff-size">3</span></div>
+      <div class="staff-list" id="staff-slots"></div>
+      <div class="target">
+        <div class="target-row"><span>Par</span><span class="num" id="target-par">—</span></div>
+        <div class="target-row"><span>League-average staff</span><span class="num" id="target-average">—</span></div>
+        <div class="target-note">Expected runs allowed. Lower is better.</div>
+      </div>
+      <button class="action-btn lock-btn" id="lock-btn" disabled>LOCK IN STAFF</button>
+      <p class="pool-hint error" id="error" hidden></p>
+    </div>
+  </div>
+</main>
+
+<!-- ================= Result ================= -->
+<main class="sim-main" id="result-view" hidden>
+  <div class="scoreboard">
+    <div class="sb-label">BEAT THE LEGENDS · <span id="result-date"></span></div>
+    <div class="score-big" id="score">—</div>
+    <div class="sb-game" id="score-sub"></div>
+    <div class="sb-banner" id="par-banner"></div>
+  </div>
+
+  <div class="panel sample-panel">
+    <h2 class="section-title">ONE SAMPLED GAME</h2>
+    <p class="pool-note">Just for fun: one seeded play-through. Your score above is the expected value, so luck here doesn't count.</p>
+    <div id="sample-game"></div>
+    <div class="sample-total" id="sample-total"></div>
+  </div>
+
+  <div class="math-grid">
+    <div class="panel wide">
+      <h2 class="section-title">THE BREAKDOWN</h2>
+      <div id="math-lines"></div>
+    </div>
+    <div class="panel">
+      <h2 class="section-title">YOUR STAFF</h2>
+      <table class="math-table" id="staff-table"></table>
+    </div>
+    <div class="panel">
+      <h2 class="section-title">THE LEGENDS AT THE PLATE</h2>
+      <table class="math-table" id="legends-result-table"></table>
+    </div>
+  </div>
+</main>
+
+<script src="daily.js"></script>
+</body>
+</html>
