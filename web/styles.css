@@ -228,6 +228,7 @@ header {
 }
 .pool-card:hover { border-color: var(--clay); }
 .pool-card.selected { border-color: var(--clay); background: #FDF4EE; }
+.pool-card[class*="tier-"].selected { box-shadow: 0 0 0 3px var(--clay); }
 .pool-card.locked { opacity: 0.4; pointer-events: none; }
 
 .pool-card .pinfo { display: flex; align-items: center; gap: 10px; min-width: 0; }
@@ -270,6 +271,65 @@ header {
 }
 
 .pool-action { width: 100%; margin-top: 4px; }
+
+/* ---------- Card tiers (warball/tiers.py), MLB The Show style ---------- */
+.tier-tag {
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  padding: 0 5px;
+  border-radius: 2px;
+  margin-left: 4px;
+  vertical-align: 1px;
+}
+.pool-card.tier-bronze { background: linear-gradient(135deg, #F3DFC9 0%, #D9A77A 100%); border-color: #A86B3C; }
+.tier-bronze .tier-tag { background: #8A5328; color: #FBEBDD; }
+
+.pool-card.tier-silver { background: linear-gradient(135deg, #F4F6F8 0%, #C3CAD3 100%); border-color: #8C96A3; }
+.tier-silver .tier-tag { background: #5E6875; color: #F4F6F8; }
+
+.pool-card.tier-gold { background: linear-gradient(135deg, #FCF1C4 0%, #E3BD4D 100%); border-color: #B08A1E; }
+.tier-gold .tier-tag { background: #8A6A0F; color: #FCF1C4; }
+
+.pool-card[class*="tier-"] .pmeta { color: var(--ink); }
+.pool-card[class*="tier-"] .pstat-label { color: var(--ink); }
+
+/* Diamond: dark card, icy gradient border, glow, and a sheen that sweeps across. */
+.pool-card.tier-diamond {
+  position: relative;
+  overflow: hidden;
+  color: #F2FBFF;
+  border: 2px solid transparent;
+  background:
+    linear-gradient(135deg, #10283F 0%, #1D4E78 55%, #2B1F4F 100%) padding-box,
+    linear-gradient(135deg, #BFF3FF, #6FC3FF, #C9A8FF, #BFF3FF) border-box;
+  box-shadow: 0 0 12px rgba(111, 195, 255, 0.55);
+}
+.pool-card.tier-diamond .pmeta,
+.pool-card.tier-diamond .pstat-label { color: #BFE6FF; }
+.pool-card.tier-diamond .pstat-value { color: #9FE7FF; text-shadow: 0 0 6px rgba(159, 231, 255, 0.7); }
+.pool-card.tier-diamond .pos-badge { background: rgba(191, 243, 255, 0.15); color: #E6F8FF; border-color: rgba(191, 243, 255, 0.5); }
+.tier-diamond .tier-tag { background: linear-gradient(90deg, #BFF3FF, #C9A8FF); color: #10283F; }
+.pool-card.tier-diamond::after {
+  content: "";
+  position: absolute;
+  inset: -50% auto -50% -60%;
+  width: 40%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transform: skewX(-20deg);
+  animation: diamond-sheen 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
+.pool-card.tier-diamond:hover { box-shadow: 0 0 18px rgba(111, 195, 255, 0.85); }
+.pool-card.tier-diamond.selected { box-shadow: 0 0 0 3px var(--clay), 0 0 18px rgba(111, 195, 255, 0.85); }
+@keyframes diamond-sheen {
+  0%, 55% { left: -60%; }
+  100% { left: 130%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pool-card.tier-diamond::after { animation: none; display: none; }
+}
 
 /* ---------- Diamond ---------- */
 .field-order-row {

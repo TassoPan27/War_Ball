@@ -277,7 +277,11 @@ function poolAction() {
 
 function cardElement(card, locked) {
   const el = document.createElement("div");
-  el.className = "pool-card" + (card.id === state.selectedId ? " selected" : "") + (locked ? " locked" : "");
+  el.className =
+    "pool-card" +
+    (card.tier ? ` tier-${card.tier}` : "") +
+    (card.id === state.selectedId ? " selected" : "") +
+    (locked ? " locked" : "");
   const meta = card.kind === "coach" ? `${card.years} · ${card.record}` : card.year;
   const value =
     card.kind === "coach" ? signed(card.stat.value) : card.stat.value.toFixed(card.kind === "pitcher" ? 2 : 1);
@@ -286,7 +290,7 @@ function cardElement(card, locked) {
       <div class="badges">${card.positions.map(p => `<span class="pos-badge">${escapeHtml(p)}</span>`).join("")}</div>
       <div>
         <div class="pname">${escapeHtml(card.name)}</div>
-        <div class="pmeta">${escapeHtml(meta)}</div>
+        <div class="pmeta">${escapeHtml(meta)}${card.tier ? ` <span class="tier-tag">${card.tier === "diamond" ? "◆ " : ""}${card.tier.toUpperCase()}</span>` : ""}</div>
       </div>
     </div>
     <div class="pstat">
