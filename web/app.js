@@ -275,6 +275,23 @@ function poolAction() {
   return null;
 }
 
+// Earned badges as chips (hover: the real stat and its percentile), plus one
+// marker for badges this season's data can't support, so "not eligible" never
+// looks like "didn't qualify".
+function badgeRow(card) {
+  const earned = (card.badges || []).map(
+    b => `<span class="badge-chip" title="${escapeHtml(`${b.name}: ${b.detail}`)}">${escapeHtml(b.name.toUpperCase())}</span>`
+  );
+  const missing = card.badgesUnavailable || [];
+  if (missing.length) {
+    const why = missing.map(u => `${u.name}: not eligible. ${u.reason}`).join("\n");
+    earned.push(`<span class="badge-na" title="${escapeHtml(why)}">ⓘ ${missing.length} N/A</span>`);
+  }
+  return earned.length ? `<div class="badge-row">${earned.join("")}</div>` : "";
+}
+
+const badgeCount = card => (card.badges || []).length;
+
 function cardElement(card, locked) {
   const el = document.createElement("div");
   el.className =
@@ -291,6 +308,7 @@ function cardElement(card, locked) {
       <div>
         <div class="pname">${escapeHtml(card.name)}</div>
         <div class="pmeta">${escapeHtml(meta)}${card.tier ? ` <span class="tier-tag">${card.tier === "diamond" ? "◆ " : ""}${card.tier.toUpperCase()}</span>` : ""}</div>
+        ${badgeRow(card)}
       </div>
     </div>
     <div class="pstat">
@@ -478,32 +496,50 @@ function renderMath({ result, coach, constants }) {
 
   const hitterRuns = new Map(LINEUP_SLOTS.map((slot, i) => [state.roster[slot], [slot, result.hitter_runs[i]]]));
   $("offense-table").innerHTML =
-    `<tr><th>#</th><th>Hitter</th><th class="num">WAR</th><th class="num">Runs vs avg</th></tr>` +
+    `<tr><th>#</th><th>Hitter</th><th class="num">WAR</th><th class="num">Runs vs avg</th><th class="num">Badges</th></tr>` +
     state.order
       .map((card, i) => {
         const [slot, runs] = hitterRuns.get(card);
         return `<tr><td>${i + 1}</td><td>${escapeHtml(card.name)} <span class="muted">${card.year} · ${slot}</span></td>
-          <td class="num">${card.stat.value.toFixed(1)}</td><td class="num">${signed(runs)}</td></tr>`;
+          <td class="num">${card.stat.value.toFixed(1)}</td><td class="num">${signed(runs)}</td>
+          <td class="num" title="${escapeHtml((card.badges || []).map(b => b.name).join(", "))}">${badgeCount(card) ? signed(badgeCount(card) * constants.badgeRuns) : "—"}</td></tr>`;
       })
       .join("");
   $("offense-lines").innerHTML =
     mathLine(`Lineup runs above average (every starter at ${constants.batterSeasonPA} PA)`, signed(result.lineup_wraa_full_season)) +
-    mathLine(`Runs scored = ${base} league-average ${plusMinus(result.lineup_wraa_full_season)}`, rs, true);
+    mathLine(
+      `Badges (${result.lineup_badge_runs / constants.badgeRuns} × ${constants.badgeRuns} runs)`,
+      signed(result.lineup_badge_runs)
+    ) +
+    mathLine(
+      `Runs scored = ${base} league-average ${plusMinus(result.lineup_wraa_full_season)} ${plusMinus(result.lineup_badge_runs)} badges`,
+      rs,
+      true
+    );
 
   const staffSlots = [...ROTATION_SLOTS, ...BULLPEN_SLOTS];
   $("pitching-table").innerHTML =
-    `<tr><th>Role</th><th>Pitcher</th><th class="num">FIP</th><th class="num">Sim IP</th><th class="num">Runs saved</th></tr>` +
+    `<tr><th>Role</th><th>Pitcher</th><th class="num">FIP</th><th class="num">Sim IP</th><th class="num">Runs saved</th><th class="num">Badges</th></tr>` +
     staffSlots
       .map((slot, i) => {
         const card = state.roster[slot];
         return `<tr><td>${slot}</td><td>${escapeHtml(card.name)} <span class="muted">${card.year}</span></td>
           <td class="num">${card.stat.value.toFixed(2)}</td><td class="num">${result.pitcher_ip[i].toFixed(0)}</td>
-          <td class="num">${signed(result.pitcher_runs[i])}</td></tr>`;
+          <td class="num">${signed(result.pitcher_runs[i])}</td>
+          <td class="num" title="${escapeHtml((card.badges || []).map(b => b.name).join(", "))}">${badgeCount(card) ? signed(badgeCount(card) * constants.badgeRuns) : "—"}</td></tr>`;
       })
       .join("");
   $("pitching-lines").innerHTML =
     mathLine("Staff runs saved vs. league average", signed(result.staff_runs_saved_full_season)) +
-    mathLine(`Runs allowed = ${base} league-average ${plusMinus(-result.staff_runs_saved_full_season)}`, ra, true);
+    mathLine(
+      `Badges (${result.staff_badge_runs / constants.badgeRuns} × ${constants.badgeRuns} runs saved)`,
+      signed(result.staff_badge_runs)
+    ) +
+    mathLine(
+      `Runs allowed = ${base} league-average ${plusMinus(-result.staff_runs_saved_full_season)} ${plusMinus(-result.staff_badge_runs)} badges`,
+      ra,
+      true
+    );
 
   $("record-lines").innerHTML =
     mathLine(`Pythagorean win% = ${rs}<sup>${exp}</sup> / (${rs}<sup>${exp}</sup> + ${ra}<sup>${exp}</sup>)`, result.win_pct.toFixed(3)) +

@@ -21,6 +21,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from warball import season
+from warball.badges import BADGE_RUNS
 from warball.draft import DraftPool
 from warball.eligibility import ALL_SLOTS, LINEUP_SLOTS
 from warball.roster import Roster
@@ -119,11 +120,13 @@ def print_scorecard(roster: Roster):
     print("SEASON PROJECTION - the math, not just a record")
     print("=" * 60)
     print(f"  Lineup wRAA (full-season rate x 650 PA/starter): {result.lineup_wraa_full_season:+.1f} runs")
-    print(f"  Projected Runs Scored (700 baseline + wRAA):      {result.projected_runs_scored:.0f}")
+    print(f"  Hitter badges ({BADGE_RUNS:.0f} runs each):                  {result.lineup_badge_runs:+.1f} runs")
+    print(f"  Projected Runs Scored (700 + wRAA + badges):      {result.projected_runs_scored:.0f}")
     print(f"  Rotation innings (5 x 200):                       {result.rotation_ip_total:.0f}")
     print(f"  Bullpen innings (season remainder / 3):           {result.bullpen_ip_total:.0f}")
     print(f"  Staff runs saved (per-IP rate x simulated IP):    {result.staff_runs_saved_full_season:+.1f} runs")
-    print(f"  Projected Runs Allowed (700 baseline - saved):    {result.projected_runs_allowed:.0f}")
+    print(f"  Pitcher badges ({BADGE_RUNS:.0f} runs each):                 {result.staff_badge_runs:+.1f} runs")
+    print(f"  Projected Runs Allowed (700 - saved - badges):    {result.projected_runs_allowed:.0f}")
     print(f"  Pythagorean win% (exponent 1.83):                 {result.win_pct:.3f}")
     print(f"\n  PROJECTED RECORD: {result.wins}-{result.losses}")
 

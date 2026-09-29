@@ -4,7 +4,7 @@ An era-spanning MLB draft and simulation game where every rating is a real, visi
 
 ## Modes
 
-**Classic Mode — Era Draft.** Each pick spins a random franchise and decade (e.g. *1990s Atlanta Braves*); you draft one player's peak season with that team in that decade into an eligible roster slot. The draft runs in three screens: a 9-man lineup, then a 5-man rotation and 3-man bullpen, then a real manager as your coach. Don't like a spin? You get 3 re-spins for your roster and 3 for your coach. Then simulate a 162-game season. The goal: go 162-0.
+**Classic Mode — Era Draft.** Each pick spins a random franchise and decade (e.g. *1990s Atlanta Braves*); you draft one player's peak season with that team in that decade into an eligible roster slot. The draft runs in three screens: a 9-man lineup, then a 5-man rotation and 3-man bullpen, then a real manager as your coach. Don't like a spin? You get 3 re-spins for your roster and 3 for your coach. Then simulate a 162-game season. Cards are tiered bronze to diamond (season WAR / FIP−) and carry specialization badges (Slugger, Table-Setter, Bat-to-Ball, Gap Power, Base Thief, Iron Man; Strikeout Artist, Control Specialist, Homer Suppressor, Workhorse, Bullpen Weapon): each is a real stat in the top 10% of its year and league, and each is worth +3 runs in the season sim. The goal: go 162-0.
 
 **Daily Mode — Beat the Legends.** A daily puzzle (same for everyone, seeded by UTC date) that alternates between two themes:
 
@@ -58,6 +58,7 @@ There's also a terminal version of the Classic draft: `python scripts/cli_draft.
 python -m pytest tests
 python scripts/phase1_check.py   # stat engine vs. known career numbers
 python scripts/phase2_check.py   # Classic draft + season sim
+python scripts/badges_check.py   # badges: famous seasons, data-era gates, balance
 python scripts/phase3_check.py   # Daily Mode Power Hitters: Legends, par, spread, theme lever
 python scripts/phase4_check.py   # Daily Mode Great Pitchers: Statcast coverage, Kershaw's curveball, par, lever
 ```

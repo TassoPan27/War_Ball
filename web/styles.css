@@ -272,6 +272,23 @@ header {
 
 .pool-action { width: 100%; margin-top: 4px; }
 
+/* ---------- Badges (warball/badges.py) ---------- */
+.badge-row { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.badge-chip, .badge-na {
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  padding: 1px 6px;
+  border-radius: 9px;
+  cursor: help;
+  white-space: nowrap;
+}
+.badge-chip { background: var(--field-green); color: var(--parchment); }
+.badge-na { border: 1px dashed currentColor; color: var(--ink-soft); opacity: 0.8; }
+.pool-card.tier-diamond .badge-chip { background: rgba(191, 243, 255, 0.9); color: #10283F; }
+.pool-card.tier-diamond .badge-na { color: #BFE6FF; }
+
 /* ---------- Card tiers (warball/tiers.py), MLB The Show style ---------- */
 .tier-tag {
   font-family: 'Oswald', sans-serif;
