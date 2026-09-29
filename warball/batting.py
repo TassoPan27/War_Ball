@@ -23,7 +23,12 @@ from warball.league import batting_context
 def _aggregate_seasons(batting: pd.DataFrame) -> pd.DataFrame:
     """Merges the rare multiple stints with the same team in one season."""
     df = batting.copy()
-    for col in ("IBB", "HBP", "SF", "SO"):
+    # Unrecorded strikeouts (1880s-90s AA/UA) and caught stealing (most seasons
+    # before 1951) read as zero once filled; flag them so badges can tell
+    # "never struck out" from "never recorded".
+    df["SO_missing"] = df["SO"].isna()
+    df["CS_missing"] = df["CS"].isna()
+    for col in ("IBB", "HBP", "SF", "SO", "SB", "CS"):
         df[col] = df[col].fillna(0)
 
     return df.groupby(SEASON_KEYS, as_index=False).agg(
@@ -39,6 +44,10 @@ def _aggregate_seasons(batting: pd.DataFrame) -> pd.DataFrame:
         SO=("SO", "sum"),
         HBP=("HBP", "sum"),
         SF=("SF", "sum"),
+        SB=("SB", "sum"),
+        CS=("CS", "sum"),
+        SO_missing=("SO_missing", "any"),
+        CS_missing=("CS_missing", "any"),
     )
 
 
@@ -98,7 +107,7 @@ def compute_batting_stats(batting: pd.DataFrame, fielding: pd.DataFrame, teams: 
     return seasons[
         [
             "playerID", "yearID", "teamID", "lgID", "POS",
-            "G", "PA", "AB", "H", "b2B", "b3B", "HR", "BB", "HBP", "SF", "SO",
+            "G", "PA", "AB", "H", "b2B", "b3B", "HR", "BB", "HBP", "SF", "SO", "SB", "CS", "SO_missing", "CS_missing",
             "OBP", "SLG", "wOBA", "OPS_plus", "wRAA", "pos_adj_runs",
             "replacement_runs", "WAR",
         ]

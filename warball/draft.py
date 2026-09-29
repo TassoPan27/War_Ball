@@ -18,6 +18,7 @@ from typing import NamedTuple
 import pandas as pd
 
 from warball import data
+from warball.badges import hitter_badges, pitcher_badges
 from warball.constants import PYTHAGOREAN_EXPONENT, SEASON_GAMES
 from warball.eligibility import (
     BATTER_MIN_PA,
@@ -136,8 +137,11 @@ class DraftPool:
         pitching = pd.read_csv(PROCESSED_DIR / "pitching_stats.csv")
         cf = center_fielders(data.load_fielding_of(), data.load_fielding_of_split(), data.load_batting())
 
-        self.hitter_seasons = _with_names(qualified_hitter_seasons(batting, data.load_fielding(), cf, info), people)
-        self.pitcher_seasons = _with_names(qualified_pitcher_seasons(pitching, info), people)
+        # Badges are percentiles within each year+league's qualified seasons, so
+        # they're computed on every qualified season before picking peaks.
+        hitter_seasons = hitter_badges(qualified_hitter_seasons(batting, data.load_fielding(), cf, info))
+        self.hitter_seasons = _with_names(hitter_seasons, people)
+        self.pitcher_seasons = _with_names(pitcher_badges(qualified_pitcher_seasons(pitching, info)), people)
         self.hitters = _peak(self.hitter_seasons, "WAR")
         self.pitchers = _peak(self.pitcher_seasons, "runs_saved")
         self.managers = _with_names(qualified_managers(data.load_managers(), teams, info), people)

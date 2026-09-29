@@ -26,6 +26,8 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from warball import season
+from warball.badges import BADGE_RUNS
+from warball.tiers import hitter_tier, pitcher_tier
 from warball.constants import BATTER_SEASON_PA, LEAGUE_AVG_RUNS_PER_SEASON, PYTHAGOREAN_EXPONENT, SEASON_GAMES
 from warball.daily import DailyChallenge
 from warball.draft import DraftPool, Spin
@@ -57,6 +59,9 @@ def hitter_card(row: dict) -> dict:
         "positions": positions,
         "slots": sorted(row["slots"]),
         "stat": {"label": "WAR", "value": round(float(row["WAR"]), 1)},
+        "tier": hitter_tier(float(row["WAR"])),
+        "badges": row["badges"],
+        "badgesUnavailable": row["badges_unavailable"],
     }
 
 
@@ -71,6 +76,9 @@ def pitcher_card(row: dict) -> dict:
         "positions": [role for role in ("SP", "RP") if role in row["slots"]],
         "slots": sorted(row["slots"]),
         "stat": {"label": "FIP", "value": round(float(row["FIP"]), 2)},
+        "tier": pitcher_tier(float(row["FIPminus"])),
+        "badges": row["badges"],
+        "badgesUnavailable": row["badges_unavailable"],
     }
 
 
@@ -152,6 +160,7 @@ class DraftApi:
                 "batterSeasonPA": BATTER_SEASON_PA,
                 "pythagExponent": PYTHAGOREAN_EXPONENT,
                 "seasonGames": SEASON_GAMES,
+                "badgeRuns": BADGE_RUNS,
             },
         }
 
