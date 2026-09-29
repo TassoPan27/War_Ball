@@ -274,7 +274,7 @@ header {
 
 /* ---------- Badges (warball/badges.py) ---------- */
 .badge-row { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
-.badge-chip, .badge-na {
+.badge-chip {
   font-family: 'Oswald', sans-serif;
   font-size: 0.58rem;
   font-weight: 600;
@@ -285,9 +285,7 @@ header {
   white-space: nowrap;
 }
 .badge-chip { background: var(--field-green); color: var(--parchment); }
-.badge-na { border: 1px dashed currentColor; color: var(--ink-soft); opacity: 0.8; }
 .pool-card.tier-diamond .badge-chip { background: rgba(191, 243, 255, 0.9); color: #10283F; }
-.pool-card.tier-diamond .badge-na { color: #BFE6FF; }
 
 /* ---------- Card tiers (warball/tiers.py), MLB The Show style ---------- */
 .tier-tag {
@@ -299,6 +297,8 @@ header {
   border-radius: 2px;
   margin-left: 4px;
   vertical-align: 1px;
+  white-space: nowrap;
+  display: inline-block;
 }
 .pool-card.tier-bronze { background: linear-gradient(135deg, #F3DFC9 0%, #D9A77A 100%); border-color: #A86B3C; }
 .tier-bronze .tier-tag { background: #8A5328; color: #FBEBDD; }

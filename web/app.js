@@ -275,18 +275,12 @@ function poolAction() {
   return null;
 }
 
-// Earned badges as chips (hover: the real stat and its percentile), plus one
-// marker for badges this season's data can't support, so "not eligible" never
-// looks like "didn't qualify".
+// Earned badges as chips (hover: the real stat and its percentile). Badges a
+// season's data can't support (stats not recorded) are simply not shown.
 function badgeRow(card) {
   const earned = (card.badges || []).map(
     b => `<span class="badge-chip" title="${escapeHtml(`${b.name}: ${b.detail}`)}">${escapeHtml(b.name.toUpperCase())}</span>`
   );
-  const missing = card.badgesUnavailable || [];
-  if (missing.length) {
-    const why = missing.map(u => `${u.name}: not eligible. ${u.reason}`).join("\n");
-    earned.push(`<span class="badge-na" title="${escapeHtml(why)}">ⓘ ${missing.length} N/A</span>`);
-  }
   return earned.length ? `<div class="badge-row">${earned.join("")}</div>` : "";
 }
 
