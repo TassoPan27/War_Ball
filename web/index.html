@@ -21,6 +21,11 @@
 <!-- ================= Draft screen ================= -->
 <section id="draft-view">
   <div class="randomizer">
+    <ol class="stepper" id="stepper">
+      <li data-phase="hitters"><span class="step-num">1</span>LINEUP</li>
+      <li data-phase="pitchers"><span class="step-num">2</span>PITCHING STAFF</li>
+      <li data-phase="coach"><span class="step-num">3</span>COACH</li>
+    </ol>
     <div class="reel-row">
       <div class="reel" id="reel-team">
         <div class="reel-label">TEAM</div>
@@ -30,7 +35,10 @@
         <div class="reel-label">ERA</div>
         <div class="reel-value" id="reel-era-value">— — —</div>
       </div>
-      <button class="action-btn spin-btn" id="spin-btn">SPIN</button>
+      <div class="spin-col">
+        <button class="action-btn spin-btn" id="spin-btn">SPIN</button>
+        <div class="respin-count" id="respin-count"></div>
+      </div>
     </div>
   </div>
 
@@ -41,7 +49,8 @@
     </div>
 
     <div>
-      <div class="field-order-row">
+      <!-- Step 1: lineup -->
+      <div class="field-order-row" id="hitters-board">
         <div class="panel">
           <h2 class="section-title">DIAMOND</h2>
           <div class="diamond-wrap">
@@ -124,13 +133,14 @@
           <h2 class="section-title">BATTING ORDER</h2>
           <div id="order-slots"></div>
           <div class="order-hint">
-            Click a drafted hitter below to add them to the order. Spots you leave empty are filled in field order when you move on to your coach.
+            Click a drafted hitter below to add them to the order. Spots you leave empty are filled in field order when you move on to your pitching staff.
           </div>
           <div class="order-tray" id="order-tray"></div>
         </div>
       </div>
 
-      <div class="panel staff-panel">
+      <!-- Step 2: pitching staff -->
+      <div class="panel staff-panel" id="pitchers-board">
         <h2 class="section-title">PITCHING STAFF</h2>
         <div class="staff-group-label">ROTATION</div>
         <div class="staff-slots" id="rotation-slots"></div>
@@ -138,11 +148,12 @@
         <div class="staff-slots" id="bullpen-slots"></div>
       </div>
 
-      <div class="panel coach-panel">
+      <!-- Step 3: coach -->
+      <div class="panel coach-panel" id="coach-board">
         <h2 class="section-title">COACH</h2>
         <div class="wide-slot" id="coach-slot">
           <span class="slot-label">MANAGER</span>
-          <span class="slot-name">drafted after your roster is full</span>
+          <span class="slot-name">spin for your coach</span>
         </div>
       </div>
     </div>

@@ -4,7 +4,7 @@ An era-spanning MLB draft and simulation game where every rating is a real, visi
 
 ## Modes
 
-**Classic Mode — Era Draft.** Each pick spins a random franchise and decade (e.g. *1990s Atlanta Braves*); you draft one player's peak season with that team in that decade into an eligible roster slot. Fill a 9-man lineup, 5-man rotation, and 3-man bullpen, draft a real manager as your coach, then simulate a 162-game season. The goal: go 162-0.
+**Classic Mode — Era Draft.** Each pick spins a random franchise and decade (e.g. *1990s Atlanta Braves*); you draft one player's peak season with that team in that decade into an eligible roster slot. The draft runs in three screens: a 9-man lineup, then a 5-man rotation and 3-man bullpen, then a real manager as your coach. Don't like a spin? You get 3 re-spins for your roster and 3 for your coach. Then simulate a 162-game season. The goal: go 162-0.
 
 **Daily Mode — Beat the Legends.** A daily puzzle (same for everyone, seeded by UTC date) that alternates between two themes:
 
