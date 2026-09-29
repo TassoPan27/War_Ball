@@ -1,8 +1,8 @@
 // WARBall Daily Mode. Two kinds of puzzle share this page:
-//   staff  (Power / Contact Hitters): draft 3 elite starters vs. nine Legends; score = expected runs allowed
+//   staff  (Power Hitters): draft 3 elite starters vs. nine Legends; score = expected runs allowed
 //   lineup (Great Pitchers): draft 9 modern hitters vs. one ace; score = expected runs scored
 // Today's theme, pool, and every number come from the local server (python -m warball.server).
-// ?theme=power|contact|aces and ?date=YYYY-MM-DD preview another theme or day.
+// ?theme=power|aces and ?date=YYYY-MM-DD preview another theme or day.
 
 const LEVER_EDGE_RATIO = 0.75; // staff: highlight a lever rate at least 25% below today's league average
 const SIG_EDGE_WOBA = 0.01; // lineup: highlight hitters this much better vs. the signature pitch than their skill predicts
@@ -146,15 +146,13 @@ function renderStaffChallenge(c) {
     `Career rates adjusted to today's game. <span class="edge-key">${leverStat(c.lever)} in orange</span> is at least ` +
     `25% below today's league average (${pct(c.reference[c.lever])}).`;
 
-  const power = c.lever === "HR";
   $("legends-title").textContent = "TODAY'S LEGENDS";
   $("legends-table").innerHTML =
-    `<tr><th>Hitter</th><th class="num">${power ? "Career HR" : "Career AVG"}</th><th class="num">HR%</th>` +
-    `<th class="num">K%</th><th class="num">BB%</th></tr>` +
+    `<tr><th>Hitter</th><th class="num">Career HR</th><th class="num">HR%</th><th class="num">K%</th><th class="num">BB%</th></tr>` +
     c.legends
       .map(
         b => `<tr><td>${escapeHtml(b.name)} <span class="muted">${b.years}</span></td>
-          <td class="num">${power ? b.HR : rate3(b.AVG)}</td><td class="num">${pct(b.adjusted.HR)}</td>
+          <td class="num">${b.HR}</td><td class="num">${pct(b.adjusted.HR)}</td>
           <td class="num">${pct(b.adjusted.K)}</td><td class="num">${pct(b.adjusted.BB)}</td></tr>`
       )
       .join("") +

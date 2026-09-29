@@ -1,13 +1,14 @@
 """
-Phase 3 checklist - Daily Mode Themes A & B (docs: daily-mode-loop-spec.md, section 9).
+Phase 3 checklist - Daily Mode pitcher-draft themes (docs: daily-mode-loop-spec.md, section 9).
 
   - career rates: famous careers' totals match known numbers
-  - Legends: each theme's lineups are the players its stat says they should be
+  - Legends: each theme's lineups are the players its stat says they should be,
+    and every one played most of his career from 1893 on (60'6")
   - determinism: same lineup + staff always gives the same score
   - par: stored per lineup; a strong staff beats it, a random one usually doesn't
   - spread: the score distribution across random staffs is wide enough to matter
-  - theme lever: a staff strong on the theme's lever (HR% for power, BB% for
-    contact) beats a higher-quality staff that's weak on it in some cases
+  - theme lever: a staff strong on the theme's lever (HR% for power) beats a
+    higher-quality staff that's weak on it in some cases
   - breakdown: raw quality + matchup edge add back up to the score
   - the ranked score never depends on the sampled reveal
 The model property tests live in tests/ (python -m pytest tests).
@@ -48,10 +49,11 @@ def check_careers(challenge: d.StaffChallenge):
     for pid in ["ruthba01", "bondsba01", "aaronha01", "judgeaa01"]:
         r = b.loc[pid]
         print(f"  {r['name']}: raw HR/PA {r['HR_total'] / r['PA']:.3f} -> modern-adjusted {r['HR']:.3f}")
-    for pid in ["gwynnto01", "boggswa01", "suzukic01", "seweljo01"]:
+    for pid in ["gwynnto01", "boggswa01", "suzukic01"]:
         r = b.loc[pid]
-        print(f"  {r['name']}: adjusted K {r['K']:.3f}, BABIP {r['babip']:.3f}, modeled AVG "
-              f"{d.modeled_avg(b.loc[[pid]], challenge.env).iloc[0]:.3f} (actual career AVG {r['H'] / r['AB']:.3f})")
+        modeled_avg = (r["HR"] + r["BIP"] * r["babip"]) / (1 - r["BB"])  # AB ~ PA - walks
+        print(f"  {r['name']}: adjusted BABIP {r['babip']:.3f}, modeled AVG {modeled_avg:.3f} "
+              f"(actual career AVG {r['H'] / r['AB']:.3f})")
 
 
 def check_legends(challenge: d.StaffChallenge):
@@ -60,10 +62,8 @@ def check_legends(challenge: d.StaffChallenge):
     b = challenge.batters
     for lineup in challenge.lineups:
         players = b.loc[lineup["players"]]
-        if theme.key == "contact":
-            assert (d.modeled_avg(players, challenge.env) >= d.CONTACT_MIN_ADJ_AVG).all()
-            assert players["K"].max() < challenge.env.rates["K"] * 0.6, "Contact Legends should strike out far less than league"
-        else:
+        assert (players["PA_modern"] / players["PA"] > d.LEGEND_MIN_MODERN_SHARE).all(), "A pre-1893 career is a Legend"
+        if theme.key == "power":
             assert players["HR"].min() > challenge.env.rates["HR"] * 1.5, "Power Legends should homer far more than league"
         names = ", ".join(n.split()[-1] for n in players["name"])
         print(f"Lineup {lineup['id']}: {names}")
@@ -95,9 +95,10 @@ def check_scoring(challenge: d.StaffChallenge):
 def check_spread(challenge: d.StaffChallenge):
     print(f"\n=== {challenge.theme.label}: score distribution per lineup (random elite staffs) ===")
     for lineup in challenge.lineups:
-        assert lineup["std"] > 0.1, "Spread too narrow for a leaderboard to mean much"
         print(f"Lineup {lineup['id']}: par {lineup['par']:.2f}, mean {lineup['mean']:.2f}, "
               f"sd {lineup['std']:.2f}, best {lineup['best']:.2f}, worst {lineup['worst']:.2f}")
+    # Print every lineup first, so a failure still shows the numbers.
+    assert all(lineup["std"] > 0.1 for lineup in challenge.lineups), "Spread too narrow for a leaderboard to mean much"
 
 
 def check_lever(challenge: d.StaffChallenge):
@@ -136,4 +137,4 @@ if __name__ == "__main__":
         check_scoring(challenge)
         check_spread(challenge)
         check_lever(challenge)
-    print("\nPhase 3 (Daily Mode Themes A & B) check passed.")
+    print("\nPhase 3 (Daily Mode pitcher-draft themes) check passed.")

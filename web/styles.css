@@ -140,7 +140,51 @@ header {
   100% { transform: translateY(0); opacity: 1; }
 }
 
-.spin-btn { padding: 18px 30px; flex-shrink: 0; }
+.spin-col { display: flex; flex-direction: column; align-items: stretch; gap: 6px; flex-shrink: 0; }
+.spin-btn { padding: 18px 30px; min-width: 150px; }
+.respin-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--ink-soft);
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+
+/* ---------- Draft steps ---------- */
+.stepper {
+  list-style: none;
+  display: flex;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 0;
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+}
+.stepper li {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 2px;
+  background: var(--parchment-dim);
+  color: var(--ink-soft);
+}
+.stepper .step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  font-size: 0.72rem;
+}
+.stepper li.active { background: var(--field-green); color: var(--parchment); }
+.stepper li.active .step-num { background: var(--gold); border-color: var(--gold); color: var(--field-green); }
+.stepper li.done { color: var(--field-green); }
+.stepper li.done .step-num { background: var(--field-green); border-color: var(--field-green); color: var(--parchment); }
 
 /* ---------- Draft layout ---------- */
 .draft-main {

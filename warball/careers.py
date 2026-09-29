@@ -41,6 +41,11 @@ HIT_MIX_SHRINK = 100
 # before a hitter's own BABIP says as much as the league average does.
 BABIP_SHRINK = 800
 
+# The pitching distance moved to 60'6" in 1893 (overhand pitching was only
+# legal from 1884). Before that it was a different game, and dominance of it
+# doesn't translate, so careers record how much was played from here on.
+MODERN_GAME_START = 1893
+
 # A pitcher is a starter when at least this share of his career games were starts.
 STARTER_GS_SHARE = 0.5
 
@@ -153,9 +158,10 @@ def career_batters(batting: pd.DataFrame, raw_batting: pd.DataFrame, lg: pd.Data
     hits[adj_mix_cols] = _era_adjust(mix, mix_league, env.hit_mix).values
     mix_careers = _weighted_career(hits, adj_mix_cols, "non_hr_hits").set_axis(HIT_TYPES, axis=1)
 
+    s["PA_modern"] = s["PA"].where(s["yearID"] >= MODERN_GAME_START, 0)
     totals = s.groupby("playerID").agg(
-        PA=("PA", "sum"), AB=("AB", "sum"), H=("H", "sum"), b2B=("2B", "sum"), b3B=("3B", "sum"),
-        HR_total=("HR", "sum"), first_year=("yearID", "min"), last_year=("yearID", "max"),
+        PA=("PA", "sum"), PA_modern=("PA_modern", "sum"), AB=("AB", "sum"), H=("H", "sum"), b2B=("2B", "sum"),
+        b3B=("3B", "sum"), HR_total=("HR", "sum"), first_year=("yearID", "min"), last_year=("yearID", "max"),
     )
     non_hr_hits = hits.groupby("playerID")["non_hr_hits"].sum().reindex(totals.index, fill_value=0)
     mix_careers = mix_careers.reindex(totals.index).fillna(pd.Series(env.hit_mix))

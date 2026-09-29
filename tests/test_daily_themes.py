@@ -33,7 +33,7 @@ def synthetic_careers(seed=1):
         pa = int(rng.integers(3000, 12000))
         batters.append({
             "playerID": f"bat{i:03d}", "name": f"Batter {i}", "first_year": 1950, "last_year": 1965,
-            "PA": pa, "AB": int(pa * 0.9), "H": int(pa * 0.9 * rng.uniform(0.24, 0.34)),
+            "PA": pa, "PA_modern": pa, "AB": int(pa * 0.9), "H": int(pa * 0.9 * rng.uniform(0.24, 0.34)),
             "HR_total": int(pa * hr), "ISO": rng.uniform(0.08, 0.30), **rates,
             "mix_1B": 0.74, "mix_2B": 0.23, "mix_3B": 0.03, "babip": rng.uniform(0.27, 0.35),
         })
@@ -99,14 +99,17 @@ def processed(tmp_path, monkeypatch):
 # ---------- Themes A and B: draft pitchers ----------
 
 
-def test_contact_legends_are_low_strikeout_hitters_who_also_hit():
+def test_legends_must_have_played_mostly_in_the_modern_game():
     batters, _ = synthetic_careers()
-    picked = daily.contact_candidates(batters, ENV)
-    assert len(picked) == daily.LEGEND_CANDIDATES
-    assert (daily.modeled_avg(picked, ENV) >= daily.CONTACT_MIN_ADJ_AVG).all()
-    left_out = batters.drop(picked.index)
-    left_out = left_out[daily.modeled_avg(left_out, ENV) >= daily.CONTACT_MIN_ADJ_AVG]
-    assert picked["K"].max() <= left_out["K"].min()
+    slugger = batters["HR"].idxmax()
+    assert slugger in daily.power_candidates(batters, ENV).index
+
+    batters.loc[slugger, "PA_modern"] = batters.loc[slugger, "PA"] * 0.4  # 60% of his career before 1893
+    picked = daily.power_candidates(batters, ENV)
+    assert slugger not in picked.index and len(picked) == daily.LEGEND_CANDIDATES
+
+    with pytest.raises(KeyError):
+        daily.power_candidates(batters.drop(columns="PA_modern"), ENV)
 
 
 def test_deal_lineups_needs_enough_candidates():
@@ -117,7 +120,7 @@ def test_deal_lineups_needs_enough_candidates():
     assert len(lineups) == daily.LINEUPS and all(len(l) == daily.LINEUP_SIZE for l in lineups)
 
 
-@pytest.mark.parametrize("key", ["power", "contact"])
+@pytest.mark.parametrize("key", list(daily.STAFF_THEMES))
 def test_staff_theme_end_to_end(processed, key):
     batters, pitchers = synthetic_careers()
     theme = daily.STAFF_THEMES[key]
@@ -192,9 +195,9 @@ def test_rotation_covers_every_built_theme(processed):
     build_aces(processed)
 
     challenge = daily.DailyChallenge()
-    week = [DATE + datetime.timedelta(days=i) for i in range(6)]
-    keys = [challenge.theme_key(d) for d in week]
-    assert set(keys) == set(daily.THEME_ROTATION) and keys[:3] == keys[3:]
+    n = len(daily.THEME_ROTATION)
+    keys = [challenge.theme_key(DATE + datetime.timedelta(days=i)) for i in range(2 * n)]
+    assert set(keys) == set(daily.THEME_ROTATION) and keys[:n] == keys[n:]
     assert challenge.challenge(DATE, "aces")["kind"] == "lineup"
     with pytest.raises(ValueError):
         challenge.challenge(DATE, "nope")

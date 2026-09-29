@@ -10,20 +10,30 @@ const ERA_STOP_TICK = 20;
 const ERA_STOP_AFTER_TEAM = 6;
 const SEASON_ANIMATION_MS = 3200;
 
+// A re-spin is a spin taken without drafting from the current team & era.
+const ROSTER_RESPINS = 3; // shared by the lineup and pitching-staff steps
+const COACH_RESPINS = 3;
+
 // Same order as the engine's ALL_SLOTS, so card ids can be sent positionally.
 const LINEUP_SLOTS = ["C", "1B", "2B", "3B", "SS", "LF", "CF", "RF", "DH"];
 const ROTATION_SLOTS = ["SP1", "SP2", "SP3", "SP4", "SP5"];
 const BULLPEN_SLOTS = ["RP1", "RP2", "RP3"];
 const ALL_SLOTS = [...LINEUP_SLOTS, ...ROTATION_SLOTS, ...BULLPEN_SLOTS];
 
+// The draft runs in steps, each on its own screen: hitters -> pitchers -> coach -> season.
+const PHASES = ["hitters", "pitchers", "coach"];
+const PHASE_SLOTS = { hitters: LINEUP_SLOTS, pitchers: [...ROTATION_SLOTS, ...BULLPEN_SLOTS] };
+
 const state = {
-  phase: "players", // "players" -> "coach" -> "season"
+  phase: "hitters", // see PHASES, then "season"
   wheel: { teams: [], eras: [] },
   pool: [], // cards from the current spin
   selectedId: null,
   pickThisSpin: null, // one pick per spin; only this pick can be undone
   hasSpun: false,
   spinning: false,
+  respins: ROSTER_RESPINS,
+  coachRespins: COACH_RESPINS,
   error: null,
   roster: {}, // slot -> card
   order: Array(LINEUP_SLOTS.length).fill(null),
@@ -49,8 +59,8 @@ function tokenName(last) {
   return last.length > TOKEN_NAME_MAX_CHARS ? last.slice(0, TOKEN_NAME_MAX_CHARS - 1) + "." : last;
 }
 
-const openSlots = () => ALL_SLOTS.filter(slot => !state.roster[slot]);
-const rosterFull = () => openSlots().length === 0;
+const openSlots = () => (PHASE_SLOTS[state.phase] || []).filter(slot => !state.roster[slot]);
+const phaseFull = () => openSlots().length === 0;
 const draftedPlayerIds = () => Object.values(state.roster).map(card => card.playerID);
 const onRoster = card => Object.values(state.roster).includes(card);
 const selectedCard = () => state.pool.find(card => card.id === state.selectedId) || null;
@@ -65,15 +75,23 @@ async function api(path, options) {
 
 // ---------- Draft actions ----------
 
+// Spinning again before drafting anyone from the current spin uses up a re-spin.
+function isRespin() {
+  return state.hasSpun && (state.phase === "coach" ? !state.coach : state.pickThisSpin === null);
+}
+
+const respinsLeft = () => (state.phase === "coach" ? state.coachRespins : state.respins);
+
 function canSpin() {
   if (state.spinning) return false;
-  if (state.phase === "players") return !rosterFull() && (!state.hasSpun || state.pickThisSpin !== null);
-  if (state.phase === "coach") return !state.hasSpun;
-  return false;
+  if (state.phase === "coach" && state.coach) return false;
+  if (state.phase !== "coach" && (!PHASE_SLOTS[state.phase] || phaseFull())) return false;
+  return !isRespin() || respinsLeft() > 0;
 }
 
 async function spin() {
   if (!canSpin()) return;
+  const respin = isRespin();
   let request;
   if (state.phase === "coach") {
     request = api("/api/coach-spin");
@@ -87,6 +105,8 @@ async function spin() {
   try {
     const result = await spinReels(request);
     state.pool = result.cards;
+    if (respin && state.phase === "coach") state.coachRespins--;
+    else if (respin) state.respins--;
     state.hasSpun = true;
     state.selectedId = null;
     state.pickThisSpin = null;
@@ -101,14 +121,14 @@ function clickCard(card) {
     if (state.coach) return;
     state.coach = card;
     state.pickThisSpin = card;
-  } else if (!state.pickThisSpin) {
+  } else if (!state.pickThisSpin && !state.spinning) {
     state.selectedId = state.selectedId === card.id ? null : card.id;
   }
   render();
 }
 
 function clickSlot(slot) {
-  if (state.phase !== "players") return;
+  if (!PHASE_SLOTS[state.phase]?.includes(slot) || state.spinning) return;
   const current = state.roster[slot];
   if (current) {
     if (current !== state.pickThisSpin) return; // earlier picks are locked in
@@ -142,9 +162,10 @@ function fillBattingOrder() {
   state.order = state.order.map(card => card || unordered.shift());
 }
 
-function startCoachDraft() {
+function goToPhase(phase) {
   fillBattingOrder();
-  Object.assign(state, { phase: "coach", pool: [], hasSpun: false, pickThisSpin: null, selectedId: null });
+  Object.assign(state, { phase, pool: [], hasSpun: false, pickThisSpin: null, selectedId: null, error: null });
+  window.scrollTo(0, 0);
   render();
 }
 
@@ -219,21 +240,37 @@ function spinReels(request) {
 
 // ---------- Draft rendering ----------
 
+function respinHint() {
+  const left = respinsLeft();
+  if (!left) return " No re-spins left.";
+  return ` Don't like this team? Re-spin (${left} left${state.phase === "coach" ? "" : " for your roster"}).`;
+}
+
 function poolHint() {
   if (state.phase === "coach") {
-    if (!state.hasSpun) return "Roster set. Spin once for your coach: a real manager of that team in that era.";
+    if (!state.hasSpun)
+      return `Roster set. Spin for your coach: a real manager of that team in that era. You get ${COACH_RESPINS} re-spins.`;
     if (state.coach) return `${state.coach.name} is your coach. Click the coach slot to undo.`;
-    return "W vs PYTH = wins above what his teams' runs scored and allowed predicted, per 162 games. It's added to your record.";
+    return "W vs PYTH = wins above what his teams' runs scored and allowed predicted, per 162 games. It's added to your record." + respinHint();
   }
-  if (rosterFull()) return "Roster complete. Set your batting order, then draft your coach.";
-  if (!state.hasSpun) return "Spin the reels to reveal a team & era.";
+  const hitters = state.phase === "hitters";
+  if (phaseFull())
+    return hitters
+      ? "Lineup complete. Set your batting order, then move on to your pitching staff."
+      : "Pitching staff complete. Time to draft your coach.";
+  if (!state.hasSpun) {
+    const what = hitters ? "nine hitters" : "five starters and three relievers";
+    return `Draft your ${what}. Spin the reels to reveal a team & era.` +
+      (hitters ? ` You get ${ROSTER_RESPINS} re-spins for your whole roster.` : ` ${state.respins} re-spins left.`);
+  }
   if (state.pickThisSpin) return `Drafted ${state.pickThisSpin.name}. Spin for your next team.`;
   if (selectedCard()) return "Click a highlighted slot to place them.";
-  return "Pick one player, then click an open slot they can play.";
+  return (hitters ? "Pick one hitter, then click an open position he can play." : "Pick one pitcher, then click an open rotation or bullpen slot.") + respinHint();
 }
 
 function poolAction() {
-  if (state.phase === "players" && rosterFull()) return ["DRAFT YOUR COACH →", startCoachDraft];
+  if (state.phase === "hitters" && phaseFull()) return ["NEXT: PITCHING STAFF →", () => goToPhase("pitchers")];
+  if (state.phase === "pitchers" && phaseFull()) return ["NEXT: DRAFT YOUR COACH →", () => goToPhase("coach")];
   if (state.phase === "coach" && state.coach) return ["SIMULATE SEASON →", simulateSeason];
   return null;
 }
@@ -263,7 +300,7 @@ function cardElement(card, locked) {
 function renderPool() {
   const panel = $("pool-panel");
   panel.innerHTML = "";
-  $("pool-title").textContent = state.phase === "coach" ? "COACH POOL" : "DRAFT POOL";
+  $("pool-title").textContent = { hitters: "DRAFT POOL — HITTERS", pitchers: "DRAFT POOL — PITCHERS", coach: "COACH POOL" }[state.phase];
 
   const hint = document.createElement("p");
   hint.className = "pool-hint" + (state.error ? " error" : "");
@@ -281,13 +318,7 @@ function renderPool() {
 
   const visible = state.pool.filter(card => card !== state.coach && !onRoster(card));
   const locked = state.pickThisSpin !== null;
-  const groups =
-    state.phase === "coach"
-      ? [["MANAGERS", visible]]
-      : [
-          ["HITTERS", visible.filter(card => card.kind === "hitter")],
-          ["PITCHERS", visible.filter(card => card.kind === "pitcher")],
-        ];
+  const groups = [[{ hitters: "HITTERS", pitchers: "PITCHERS", coach: "MANAGERS" }[state.phase], visible]];
   for (const [title, cards] of groups) {
     if (!cards.length) continue;
     const heading = document.createElement("div");
@@ -336,9 +367,25 @@ function renderStaff() {
 
 function renderCoachSlot() {
   const coach = state.coach;
-  const emptyText = state.phase === "coach" ? "spin for your coach" : "drafted after your roster is full";
-  const text = coach ? `${coach.name} (${signed(coach.stat.value)} W vs PYTH)` : emptyText;
+  const text = coach ? `${coach.name} (${signed(coach.stat.value)} W vs PYTH)` : "spin for your coach";
   renderWideSlot($("coach-slot"), text, !!coach, false);
+}
+
+function renderSteps() {
+  const current = PHASES.indexOf(state.phase);
+  document.querySelectorAll("#stepper li").forEach(el => {
+    const i = PHASES.indexOf(el.dataset.phase);
+    el.classList.toggle("active", i === current);
+    el.classList.toggle("done", i < current);
+  });
+  $("hitters-board").hidden = state.phase !== "hitters";
+  $("pitchers-board").hidden = state.phase !== "pitchers";
+  $("coach-board").hidden = state.phase !== "coach";
+
+  const left = respinsLeft();
+  const total = state.phase === "coach" ? COACH_RESPINS : ROSTER_RESPINS;
+  $("spin-btn").textContent = isRespin() ? (left ? "RE-SPIN" : "NO RE-SPINS") : "SPIN";
+  $("respin-count").textContent = `RE-SPINS ${left} / ${total}`;
 }
 
 function renderOrder() {
@@ -378,6 +425,7 @@ function render() {
   renderOrder();
   renderStaff();
   renderCoachSlot();
+  renderSteps();
   $("spin-btn").disabled = !canSpin();
 }
 

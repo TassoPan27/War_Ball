@@ -3,12 +3,12 @@ Daily Mode: a themed matchup puzzle scored against par.
 
 Themes rotate by UTC date (THEME_ROTATION), so everyone plays the same puzzle:
 
-  power    Power Hitters    draft 3 starters vs. nine career sluggers      lever: HR suppression
-  contact  Contact Hitters  draft 3 starters vs. nine career contact bats  lever: walk prevention
-  aces     Great Pitchers   draft 9 hitters vs. one modern ace             lever: his signature pitch (aces.py)
+  power    Power Hitters    draft 3 starters vs. nine career sluggers   lever: HR suppression
+  aces     Great Pitchers   draft 9 hitters vs. one modern ace          lever: his signature pitch (aces.py)
 
-This module holds the two pitcher-draft themes, which share one engine and
-differ only in how their Legends are chosen and which lever they highlight.
+This module holds the pitcher-draft themes (STAFF_THEMES). They share one
+engine and differ only in how their Legends are chosen and which lever they
+highlight, so a new one is a StaffTheme entry plus a candidates function.
 Each UTC date picks one of the theme's precomputed Legends lineups and a pool
 of elite career starters. The player drafts STAFF_SIZE pitchers; each faces
 the lineup once through (9 PA each, 27 total). Every plate appearance is a
@@ -33,22 +33,21 @@ from warball import aces, careers, data, par, runs
 from warball.data import PROCESSED_DIR
 from warball.matchup import BUCKETS, HIT_TYPES, Batter, Environment, Pitcher, average_batter, average_pitcher
 
-THEME_ROTATION = ("power", "contact", "aces")
+THEME_ROTATION = ("power", "aces")
 
 # Career floors: the lowest values where no short career reaches the top of
-# the power, contact, or elite-starter leaderboards (3000 PA is ~5 full seasons).
+# the power or elite-starter leaderboards (3000 PA is ~5 full seasons).
 LEGEND_MIN_CAREER_PA = 3000
 STARTER_MIN_CAREER_BF = 3000
+
+# A Legend must have played most of his career in the modern game (from
+# careers.MODERN_GAME_START, when the pitching distance reached 60'6").
+LEGEND_MIN_MODERN_SHARE = 0.5
 
 # A power Legend must also have hit home runs in his own time. Odds-ratio era
 # adjustment turns dominance of a near-zero dead-ball league HR rate into an
 # implausible modern one (Home Run Baker, 96 career HR, would rank 8th ever).
 POWER_MIN_RAW_HR_RATE = 0.04
-
-# A contact Legend must also hit, not just avoid strikeouts: a modeled batting
-# average (in the modern environment) this far above the 2015-2024 league's
-# ~.250, so the lineup is the Gwynns and Boggses, not light-hitting slap bats.
-CONTACT_MIN_ADJ_AVG = 0.290
 
 LEGEND_CANDIDATES = 45
 LINEUPS = 5
@@ -78,22 +77,19 @@ def load_careers() -> tuple[pd.DataFrame, pd.DataFrame]:
     return batters, pitchers
 
 
-def modeled_avg(batters: pd.DataFrame, env: Environment) -> pd.Series:
-    """Batting average implied by a batter's adjusted rates: (HR + BIP x BABIP) / at-bats, with AB ~ PA - BB."""
-    babip = batters["babip"].fillna(env.babip) if "babip" in batters else env.babip
-    return (batters["HR"] + batters["BIP"] * babip) / (1 - batters["BB"])
+def legend_eligible(batters: pd.DataFrame) -> pd.DataFrame:
+    """Careers long enough, and modern enough, to be any theme's Legend."""
+    if "PA_modern" not in batters:
+        raise KeyError("Career PA_modern missing: rerun python -m warball.pipeline")
+    return batters[
+        (batters["PA"] >= LEGEND_MIN_CAREER_PA) & (batters["PA_modern"] / batters["PA"] > LEGEND_MIN_MODERN_SHARE)
+    ]
 
 
 def power_candidates(batters: pd.DataFrame, env: Environment) -> pd.DataFrame:
-    eligible = batters[
-        (batters["PA"] >= LEGEND_MIN_CAREER_PA) & (batters["HR_total"] / batters["PA"] >= POWER_MIN_RAW_HR_RATE)
-    ]
+    eligible = legend_eligible(batters)
+    eligible = eligible[eligible["HR_total"] / eligible["PA"] >= POWER_MIN_RAW_HR_RATE]
     return eligible.nlargest(LEGEND_CANDIDATES, "HR")
-
-
-def contact_candidates(batters: pd.DataFrame, env: Environment) -> pd.DataFrame:
-    eligible = batters[(batters["PA"] >= LEGEND_MIN_CAREER_PA) & (modeled_avg(batters, env) >= CONTACT_MIN_ADJ_AVG)]
-    return eligible.nsmallest(LEGEND_CANDIDATES, "K")
 
 
 @dataclass(frozen=True)
@@ -121,15 +117,6 @@ STAFF_THEMES = {
         lever="HR",
         lever_name="home-run suppression",
         candidates=power_candidates,
-    ),
-    "contact": StaffTheme(
-        key="contact",
-        label="CONTACT HITTERS",
-        headline="Nine career contact bats. Three arms. Beat par.",
-        blurb="and strikeouts are hard to come by against this lineup, so limit the free passes and beat par.",
-        lever="BB",
-        lever_name="walk prevention",
-        candidates=contact_candidates,
     ),
 }
 
@@ -182,7 +169,7 @@ def build() -> dict:
 
 
 class StaffChallenge:
-    """One pitcher-draft theme's daily puzzle (Power Hitters or Contact Hitters)."""
+    """One pitcher-draft theme's daily puzzle (e.g. Power Hitters)."""
 
     kind = "staff"
 
@@ -213,10 +200,9 @@ class StaffChallenge:
             "years": f"{int(r['first_year'])}-{int(r['last_year'])}",
             "PA": int(r["PA"]),
             "HR": int(r["HR_total"]),
-            "AVG": round(float(r["H"] / r["AB"]), 3),
             "rawHrRate": round(float(r["HR_total"] / r["PA"]), 4),
             "ISO": round(float(r["ISO"]), 3),
-            "adjusted": {**self._rates(r), "AVG": round(float(modeled_avg(self.batters.loc[[player]], self.env).iloc[0]), 3)},
+            "adjusted": self._rates(r),
         }
 
     def _pitcher_card(self, player: str) -> dict:
